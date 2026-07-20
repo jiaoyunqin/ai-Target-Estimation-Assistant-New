@@ -82,7 +82,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
   const skills=[['budget-attribution-analysis','查询预算数据，并做归因分析。支持补贴率、费率、税后平台补贴等指标的维度下钻归因。'],['budget-enum-query','查询钱效预算分析各维度字段的枚举值，用于正式归因分析前确认取值。'],['metric-definition-query','查询预算/补贴分析中的指标口径、分子分母以及维度字段定义。'],['sensight','舆情搜索与趋势洞察，支持社交媒体内容提取与近期发文动态分析。'],['big-promotion-broadcast','电商大促或实验效果数据飞书卡片播报，可置入用户自然语言模板。'],['budget-anomaly-detect','通用化预算/补贴异常扫描，支持指标任意指定与多维归因下钻。'],['markdown-to-html','Convert Markdown files to HTML with configurable styles.']];
   skillGrid.innerHTML=skills.map((x,i)=>`<article class="skill-card"><div class="skill-title"><i>⌕</i><div><b>${x[0]}</b><small>公开</small></div><span class="toggle ${i<4?'on':''}"></span></div><p>${x[1]}</p><div class="skill-actions"><button class="use">▷ 使用</button><button>⇩ 下载</button><button>⊙ 查看</button></div></article>`).join('');
   function openKnowledgeModal(){knowledgeModal.classList.add('on')}function closeKnowledgeModal(){knowledgeModal.classList.remove('on')}
-  const naturalFrame=document.querySelector('#naturalContent');naturalFrame.srcdoc=window.EMBEDDED_PAGES['natural.html'];
+  const naturalFrame=document.querySelector('#naturalContent');naturalFrame.onload=()=>enhanceNaturalFrame(naturalFrame.contentDocument);naturalFrame.srcdoc=window.EMBEDDED_PAGES['natural.html'];
   const routes={
     info:{src:'promo.html'},
     market:{src:'other.html',tab:'market'},
@@ -92,6 +92,50 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
   const frame=document.querySelector('#content');
   const buttons=[...document.querySelectorAll('[data-page]')];
   let current='';
+
+  function enhanceNaturalFrame(doc){
+    if(!doc||doc.documentElement.dataset.naturalCleaned==='true')return;
+    doc.documentElement.dataset.naturalCleaned='true';
+    const style=doc.createElement('style');
+    style.textContent=`
+      .natural-legend .skill1,.natural-legend .skill2{display:none!important}
+      .natural-legend .average:before{border-color:#95a7c1!important;border-style:dashed}
+      #futureBg,#futureDivider,#skillOnePath,#skillTwoPath{display:none!important}
+    `;
+    doc.head.appendChild(style);
+    const applyNaturalChartCleanup=()=>{
+      const legend=doc.querySelector('.natural-legend');
+      if(legend&&!legend.querySelector('.average')){
+        legend.querySelector('.history').textContent='自然水位';
+        const avg=doc.createElement('span');
+        avg.className='average';
+        avg.textContent='均值';
+        legend.appendChild(avg);
+      }
+      const historyPath=doc.querySelector('#waterHistoryPath');
+      const skillOnePath=doc.querySelector('#skillOnePath');
+      const areaPath=doc.querySelector('#waterAreaPath');
+      if(historyPath&&skillOnePath&&skillOnePath.getAttribute('d')&&!historyPath.dataset.fullRangeApplied){
+        const historyD=historyPath.getAttribute('d')||'';
+        const nextD=(skillOnePath.getAttribute('d')||'').replace(/^M/,'L');
+        historyPath.setAttribute('d',historyD+' '+nextD);
+        historyPath.dataset.fullRangeApplied='true';
+        areaPath?.remove();
+      }
+      const tipbar=doc.querySelector('.chart-card .tipbar');
+      if(tipbar)tipbar.innerHTML='<span class="info-dot">i</span>历史数据用于还原真实自然水位；该曲线仅展示当前应用的自然水位结果，不叠加未来预测曲线。';
+      const chart=doc.querySelector('#waterChart');
+      if(chart&&!chart.dataset.tooltipCleaned){
+        chart.dataset.tooltipCleaned='true';
+        chart.addEventListener('mousemove',()=>{
+          const strong=doc.querySelector('#waterTooltip strong');
+          if(strong)strong.textContent=strong.textContent.replace('Skill 1 预测','自然水位');
+        });
+      }
+    };
+    applyNaturalChartCleanup();
+    doc.defaultView.setTimeout(applyNaturalChartCleanup,80);
+  }
 
   function enhancePromoFrame(doc){
     const main=doc.querySelector('main.main');
@@ -417,12 +461,23 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     });
     const side=doc.querySelector('aside.right');
     if(!side)return;
+    side.querySelectorAll('[data-static-sidebar]').forEach(panel=>{
+      panel.hidden=context==='versions';
+    });
     const skill=side.querySelector('[data-sidebar-context="'+context+'"][data-sidebar-order="skill"]');
     const progress=side.querySelector('[data-sidebar-context="'+context+'"][data-sidebar-order="progress"]');
     const anchor=side.querySelector('.box')?.nextSibling||side.firstChild;
     if(progress)side.insertBefore(progress,anchor);
     if(skill)side.insertBefore(skill,progress||anchor);
   }
+
+    function removeNoticePanel(doc){
+      doc.querySelector('#notice')?.remove();
+      const win=doc.defaultView;
+      if(!win)return;
+      win.notice={style:{}};
+      win.versionWarning={textContent:''};
+    }
 
   function enhanceMarketFrame(doc){
     const market=doc.querySelector('#market');
@@ -478,15 +533,14 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .trend-card{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:14px}
       .chart-box{border:1px solid #dce8f8;background:#fff;border-radius:14px;padding:12px}
       .chart-box svg{width:100%;height:260px;display:block}
+      .market-original-output .forecast-legend .dot.forecast:before{color:#397cf4}
+      .market-original-output .forecast-legend .dot.shipping:before{color:#27bfa6}
+      .market-original-output .forecast-legend .dot.natural:before{color:#95a7c4}
       .risk-list{display:grid;gap:10px}
       .risk-item{border:1px solid #e1e9f6;background:#fbfdff;border-radius:12px;padding:11px}
       .risk-item b{display:block;color:#263a5b;margin-bottom:4px}
       .risk-item span{color:#7f8da6;line-height:1.5}
       .market-placeholder{border:1px dashed #b9cff2;background:#f7fbff;border-radius:16px;padding:16px;color:#7486a2;text-align:center}
-      .right [data-sidebar-context][hidden]{display:none!important}
-      .right .market-skill-panel,.right .industry-skill-panel{margin-bottom:16px}
-      .right .skill-grid-auto,.right .industry-skill-grid{grid-template-columns:1fr}
-      .right .progress-rail,.right .industry-progress-rail{grid-template-columns:1fr;margin-bottom:16px}
       @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
       @media(max-width:1100px){.skill-grid-auto,.progress-rail{grid-template-columns:1fr 1fr}.trend-card{grid-template-columns:1fr}}
       @media(max-width:700px){.market-hero,.skill-panel-head,.result-head{display:block}.skill-grid-auto,.progress-rail{grid-template-columns:1fr}.market-run-state{margin-top:12px}}
@@ -494,6 +548,36 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     doc.head.appendChild(style);
     const originalCycle=market.querySelector('#marketCycle')?.cloneNode(true);
     const originalDaily=market.querySelector('#marketDaily')?.cloneNode(true);
+    const enhanceMarketDailyChart=sourceNode=>{
+      if(!sourceNode||sourceNode.dataset.shippingCurveEnhanced==='true')return;
+      sourceNode.dataset.shippingCurveEnhanced='true';
+      const title=sourceNode.querySelector('.chart-card .forecast-title h3');
+      const subtitle=sourceNode.querySelector('.chart-card .forecast-title span');
+      const legend=sourceNode.querySelector('.chart-card .forecast-legend');
+      const svg=sourceNode.querySelector('.chart-card .forecast-chart svg');
+      if(title)title.textContent='分日支付 / 发货 GMV 曲线';
+      if(subtitle)subtitle.textContent='蓝线=分日预测支付GMV · 绿线=分日预测发货GMV · 灰线=自然水位 · 红线=关键日';
+      if(legend&&!legend.querySelector('.shipping')){
+        const shippingLegend=doc.createElement('span');
+        shippingLegend.className='dot shipping';
+        shippingLegend.textContent='预测发货GMV';
+        const forecastLegend=legend.querySelector('.forecast');
+        if(forecastLegend)forecastLegend.insertAdjacentElement('afterend',shippingLegend);
+        else legend.appendChild(shippingLegend);
+      }
+      if(svg&&!svg.querySelector('[data-shipping-gmv-line]')){
+        const shippingPath=doc.createElementNS('http://www.w3.org/2000/svg','path');
+        shippingPath.dataset.shippingGmvLine='true';
+        shippingPath.setAttribute('d','M0 158 C45 170 70 112 105 118 S145 270 180 154 S225 88 260 174 S330 170 360 156 S405 148 430 150 S500 112 535 146 S610 174 670 176 S760 174 830 168 S900 144 930 176 S1020 174 1075 174 S1135 182 1175 126 S1235 146 1270 170 S1345 168 1400 48');
+        shippingPath.setAttribute('fill','none');
+        shippingPath.setAttribute('stroke','#27bfa6');
+        shippingPath.setAttribute('stroke-width','3');
+        shippingPath.setAttribute('stroke-linecap','round');
+        shippingPath.setAttribute('stroke-linejoin','round');
+        const paths=svg.querySelectorAll('path');
+        svg.insertBefore(shippingPath,paths[2]||null);
+      }
+    };
     market.innerHTML=`
       <div class="market-progressive">
         <section class="market-hero">
@@ -541,6 +625,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     syncSidebarPanels(doc, 'market');
     const mountOriginalBlock=(blockName,title,subtitle,sourceNode)=>{
       if(!sourceNode)return;
+      if(blockName==='daily')enhanceMarketDailyChart(sourceNode);
       sourceNode.classList.remove('hidden');
       sourceNode.style.display='block';
       if(blockName==='cycle'){
@@ -788,6 +873,296 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     resetIndustryGeneration();
   }
 
+  function enhanceVersionsFrame(doc){
+    const versions=doc.querySelector('#versions');
+    if(!versions||versions.dataset.collabEnhanced==='true')return;
+    versions.dataset.collabEnhanced='true';
+    const moduleRows=[...versions.querySelectorAll('.version-item')].map(row=>({
+      key:row.dataset.module||'',
+      name:row.querySelector('b')?.textContent.trim()||'未命名模块',
+      desc:row.querySelector('small')?.textContent.trim()||'',
+      scope:row.children[1]?.textContent.trim()||'完整模块',
+      version:row.querySelector('.version-no')?.textContent.trim()||'草稿',
+      status:row.querySelector('.version-status')?.textContent.trim()||'草稿',
+      consumer:row.querySelector('.consumer')?.textContent.trim()||'暂未发布'
+    }));
+    if(!moduleRows.length){
+      moduleRows.push(
+        {key:'natural',name:'01 自然水位还原',desc:'历史还原、未来水位',scope:'完整模块',version:'V2.1',status:'草稿',consumer:'03 不可应用'},
+        {key:'info',name:'02 大促信息维护',desc:'周期、阶段、预算、Mapping',scope:'完整模块',version:'V1.3',status:'草稿',consumer:'03、04 不可应用'},
+        {key:'market',name:'03 大盘目标测算',desc:'全周期 / 分阶段 / 分日',scope:'完整报告',version:'V4.0',status:'草稿',consumer:'04 不可应用'},
+        {key:'industry',name:'04 行业目标测算',desc:'全周期 / 分阶段 / 分日',scope:'完整报告',version:'V2.0',status:'草稿',consumer:'暂未发布'}
+      );
+    }
+    const sessionId='session-'+new Date().toISOString().slice(0,10).replaceAll('-','')+'-market';
+    const personalVersions=[];
+    const publicVersions=[
+      {name:'公共版本 V1',time:'2026-07-20 18:00',scope:'大盘测算完整报告',owner:'目标测算团队',reference:true}
+    ];
+    const style=doc.createElement('style');
+    style.textContent=`
+      .version-collab{display:grid;gap:18px}
+      .collab-hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;background:linear-gradient(135deg,#f8fbff 0%,#edf5ff 100%);border:1px solid #dce8f8;border-radius:20px;padding:20px}
+      .collab-hero h2{margin:4px 0 8px;color:#213b62;font-size:22px}
+      .collab-hero p{margin:0;color:#70819b;line-height:1.6}
+      .collab-eyebrow{font-size:12px;font-weight:900;color:#3268e6;letter-spacing:.04em}
+      .collab-session{min-width:230px;border:1px solid #d7e5f8;background:#fff;border-radius:16px;padding:13px;color:#73839c}
+      .collab-session small{display:block;margin-bottom:5px;color:#91a0b6}
+      .collab-session b{display:block;color:#213b62;margin-bottom:8px}
+      .collab-session span{display:block;line-height:1.45}
+      .collab-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:16px}
+      .collab-card{border:1px solid #dce8f8;background:#fff;border-radius:18px;padding:18px;box-shadow:0 12px 32px rgba(32,72,128,.06)}
+      .collab-card h3{margin:0;color:#213b62}
+      .collab-card p{margin:7px 0 0;color:#7b8ba4;line-height:1.6}
+      .collab-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+      .collab-card-head small{color:#8b9ab0}
+      .collab-badge{display:inline-flex;align-items:center;border:1px solid #dbe6f6;background:#f7faff;border-radius:999px;padding:6px 10px;color:#61728c;font-size:12px;font-weight:900}
+      .collab-table{display:grid;gap:10px}
+      .collab-module-row{display:grid;grid-template-columns:minmax(180px,1.4fr) .7fr .6fr .85fr;gap:10px;align-items:center;border:1px solid #e1eaf7;background:#fbfdff;border-radius:14px;padding:12px}
+      .collab-module-row b{display:block;color:#263a5b}
+      .collab-module-row small{display:block;color:#8493aa;margin-top:3px}
+      .collab-module-row span{color:#687b95;font-weight:800}
+      .collab-status{justify-self:start;border-radius:999px;padding:5px 9px;background:#fff4e2;color:#a56a13;font-size:12px;font-weight:900}
+      .collab-status.public{background:#eaf8f0;color:#188251}
+      .collab-ref-box{display:grid;gap:12px}
+      .collab-ref-item{border:1px solid #e0e9f6;background:#fbfdff;border-radius:14px;padding:13px}
+      .collab-ref-item b{display:flex;justify-content:space-between;gap:8px;color:#263a5b}
+      .collab-ref-item small{display:block;color:#8292aa;line-height:1.5;margin-top:5px}
+      .collab-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+      .collab-actions button,.version-action-row button,.version-list button{border:1px solid #d4e1f3;background:#fff;border-radius:12px;padding:10px 12px;color:#31506f;font-weight:900;cursor:pointer}
+      .collab-actions button.primary,.version-action-row button.primary,.version-list button.primary{background:#245fd6;border-color:#245fd6;color:#fff}
+      .collab-actions button:hover,.version-action-row button:hover,.version-list button:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(39,91,170,.12)}
+      .archive-feedback{display:none;margin-top:12px;border:1px solid #dce8f8;background:#f7fbff;border-radius:14px;padding:12px;color:#60718a;line-height:1.55}
+      .archive-feedback.on{display:block}
+      .archive-feedback a{color:#245fd6;font-weight:900;text-decoration:none}
+      .share-link{margin-top:8px;width:100%;box-sizing:border-box;border:1px solid #cfddf0;border-radius:10px;padding:9px;color:#34506f;background:#fff}
+      .collab-split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+      .version-action-row{display:flex;gap:10px;align-items:center;margin:12px 0}
+      .version-list{display:grid;gap:10px}
+      .version-empty{border:1px dashed #cad8ea;background:#fbfdff;border-radius:13px;padding:12px;color:#8a98ad}
+      .version-record{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #e1eaf7;background:#fbfdff;border-radius:14px;padding:12px}
+      .version-record b{display:block;color:#263a5b}
+      .version-record small{display:block;color:#8392aa;line-height:1.45;margin-top:3px}
+      .version-record .tag{display:inline-block;margin-top:7px;border-radius:999px;background:#f1f5fb;color:#72839c;padding:4px 8px;font-size:12px;font-weight:900}
+      .version-record.ref{border-color:#9bd8b8;background:#f3fbf6}
+      .long-term-card{background:linear-gradient(135deg,#fbfcff,#f7faff)}
+      .long-term-card ul{margin:10px 0 0;padding-left:18px;color:#7b8ba4;line-height:1.7}
+      @media(max-width:1000px){.collab-grid,.collab-split{grid-template-columns:1fr}.collab-actions{grid-template-columns:1fr}.collab-module-row{grid-template-columns:1fr}.collab-hero{display:block}.collab-session{margin-top:14px}}
+    `;
+    doc.head.appendChild(style);
+    versions.innerHTML=`
+      <div class="version-collab">
+        <section class="collab-hero">
+          <div>
+            <span class="collab-eyebrow">VERSION & ARCHIVE</span>
+            <h2>版本与协同留档中心</h2>
+            <p>保持最小闭环：个人版本用于自己回看，公共版本用于下游引用；短期先支持完整 CSV、飞书文档占位导出和会话分享链接。</p>
+          </div>
+          <div class="collab-session">
+            <small>当前会话</small>
+            <b data-session-id>${sessionId}</b>
+            <span data-reference-summary>当前引用：公共版本 V1｜大盘测算完整报告</span>
+          </div>
+        </section>
+        <section class="collab-grid">
+          <article class="collab-card">
+            <div class="collab-card-head"><div><h3>当前模块版本</h3><small>保留现有模块状态，不强制进入下游引用。</small></div><span class="collab-badge">4 个模块</span></div>
+            <div class="collab-table" data-module-version-list></div>
+          </article>
+          <div class="collab-ref-box">
+            <article class="collab-card">
+              <div class="collab-card-head"><div><h3>下游引用</h3><small>只有公共版本可以被设为引用版本。</small></div></div>
+              <div class="collab-ref-item"><b>行业测算 <span data-current-ref-chip>公共版本 V1</span></b><small data-current-ref-desc>引用大盘测算完整报告，包含全周期、分阶段、分日目标与口径。</small></div>
+              <div class="collab-ref-item"><b>协同留档 <span>个人版本隔离</span></b><small>个人版本默认仅自己可见，不进入下游引用，也不会覆盖公共版本。</small></div>
+            </article>
+            <article class="collab-card long-term-card">
+              <h3>长期能力</h3>
+              <p><b>对话式留档：待排期</b></p>
+              <ul>
+                <li>每次关键确认自动沉淀为会话节点。</li>
+                <li>版本差异用对话方式回看和追问。</li>
+                <li>公共版本发布时自动生成变更摘要。</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+        <section class="collab-card">
+          <div class="collab-card-head">
+            <div><h3>短期下载留档</h3><small>优先解决报告产出与协同传递，后续再升级成完整版本管理。</small></div>
+            <span class="collab-badge">完成态</span>
+          </div>
+          <div class="collab-actions">
+            <button class="primary" data-download-market-csv>下载完整 CSV</button>
+            <button data-export-feishu>导出飞书文档</button>
+            <button data-share-session>生成会话分享链接</button>
+          </div>
+          <div class="archive-feedback" data-archive-feedback></div>
+        </section>
+        <section class="collab-split">
+          <article class="collab-card">
+            <div class="collab-card-head"><div><h3>个人版本</h3><small>保存当前会话快照，仅自己回看。</small></div></div>
+            <div class="version-action-row"><button data-save-personal-version>存为个人版本</button><span class="collab-badge">不进入下游引用</span></div>
+            <div class="version-list" data-personal-version-list></div>
+          </article>
+          <article class="collab-card">
+            <div class="collab-card-head"><div><h3>公共版本发布</h3><small>发布后生成不可静默覆盖的公共记录，下游可主动引用。</small></div></div>
+            <div class="version-action-row"><button class="primary" data-publish-public-version>发布公共版本</button><span class="collab-badge">可被行业测算引用</span></div>
+            <div class="version-list" data-public-version-list></div>
+          </article>
+        </section>
+      </div>
+    `;
+    const side=doc.querySelector('aside.right');
+    if(side){
+      side.querySelectorAll(':scope > .box:not([data-sidebar-context]), :scope > .version-box:not([data-sidebar-context])').forEach(panel=>{
+        panel.dataset.staticSidebar='true';
+      });
+      if(!side.querySelector('[data-version-side-summary]')){
+        const summary=doc.createElement('div');
+        summary.className='box';
+        summary.dataset.sidebarContext='versions';
+        summary.dataset.versionSideSummary='true';
+        summary.innerHTML='<h3>当前引用版本</h3><div class="flow"><i>✓</i><b data-side-reference>公共版本 V1</b><small data-side-reference-desc>大盘测算完整报告</small></div>';
+        const archive=doc.createElement('div');
+        archive.className='box';
+        archive.dataset.sidebarContext='versions';
+        archive.dataset.versionSideArchive='true';
+        archive.innerHTML='<h3>留档产出</h3><div class="mini"><b>CSV <span>完整明细</span></b><small>全周期 / 阶段 / 分日表格</small></div><div class="mini"><b>飞书文档 <span>占位导出</span></b><small>静态 Demo 中生成模拟链接</small></div><div class="mini"><b>分享链接 <span>会话级</span></b><small>带 session 参数，可回到版本页</small></div>';
+        side.insertBefore(archive,side.firstChild);
+        side.insertBefore(summary,archive);
+      }
+    }
+    const nowText=()=>new Date().toLocaleString('zh-CN',{hour12:false});
+    const toast=message=>{
+      if(typeof doc.defaultView.tip==='function')doc.defaultView.tip(message);
+    };
+    const escapeCsv=value=>'"'+String(value??'').replaceAll('"','""').replace(/\s+/g,' ').trim()+'"';
+    const downloadCsv=(filename,content)=>{
+      const blob=new Blob(['\ufeff'+content],{type:'text/csv;charset=utf-8'});
+      const url=doc.defaultView.URL.createObjectURL(blob);
+      const link=doc.createElement('a');
+      link.href=url;
+      link.download=filename;
+      doc.body.appendChild(link);
+      link.click();
+      link.remove();
+      doc.defaultView.URL.revokeObjectURL(url);
+    };
+    const setFeedback=html=>{
+      const feedback=versions.querySelector('[data-archive-feedback]');
+      feedback.innerHTML=html;
+      feedback.classList.add('on');
+    };
+    const renderModules=()=>{
+      versions.querySelector('[data-module-version-list]').innerHTML=moduleRows.map(row=>{
+        const publicState=row.status.includes('发布')?' public':'';
+        return '<div class="collab-module-row"><div><b>'+row.name+'</b><small>'+row.desc+'</small></div><span>'+row.scope+'</span><span>'+row.version+'</span><span class="collab-status'+publicState+'">'+row.status+'｜'+row.consumer+'</span></div>';
+      }).join('');
+    };
+    const renderPersonal=()=>{
+      const host=versions.querySelector('[data-personal-version-list]');
+      if(!personalVersions.length){
+        host.innerHTML='<div class="version-empty">暂无个人版本。点击「存为个人版本」后，会保存当前会话与报告快照。</div>';
+        return;
+      }
+      host.innerHTML=personalVersions.map(item=>'<div class="version-record"><div><b>'+item.name+'</b><small>'+item.time+'｜'+item.scope+'</small><span class="tag">仅自己可见</span></div></div>').join('');
+    };
+    const renderPublic=()=>{
+      const host=versions.querySelector('[data-public-version-list]');
+      host.innerHTML=publicVersions.map((item,index)=>'<div class="version-record '+(item.reference?'ref':'')+'"><div><b>'+item.name+'</b><small>'+item.time+'｜'+item.scope+'｜'+item.owner+'</small><span class="tag">'+(item.reference?'当前引用版本':'公共可引用')+'</span></div><button '+(item.reference?'disabled':'')+' data-set-public-reference="'+index+'">'+(item.reference?'引用中':'设为引用版本')+'</button></div>').join('');
+      const current=publicVersions.find(item=>item.reference)||publicVersions[0];
+      versions.querySelector('[data-reference-summary]').textContent='当前引用：'+current.name+'｜'+current.scope;
+      versions.querySelector('[data-current-ref-chip]').textContent=current.name;
+      versions.querySelector('[data-current-ref-desc]').textContent='引用'+current.scope+'，包含全周期、分阶段、分日目标与口径。';
+      const sideReference=doc.querySelector('[data-side-reference]');
+      const sideReferenceDesc=doc.querySelector('[data-side-reference-desc]');
+      if(sideReference)sideReference.textContent=current.name;
+      if(sideReferenceDesc)sideReferenceDesc.textContent=current.scope;
+    };
+    const collectMarketCsv=()=>{
+      const rows=[];
+      rows.push(['导出对象','大盘测算完整报告']);
+      rows.push(['会话ID',sessionId]);
+      rows.push(['导出时间',nowText()]);
+      rows.push([]);
+      const sections=[
+        ['大盘全周期/分阶段目标','#marketCycle'],
+        ['大盘分日目标','#marketDaily']
+      ];
+      sections.forEach(([sectionName,selector])=>{
+        const section=doc.querySelector(selector);
+        rows.push(['SECTION',sectionName]);
+        if(!section){
+          rows.push(['WARN','当前 Demo 未找到 '+selector]);
+          rows.push([]);
+          return;
+        }
+        const tables=[...section.querySelectorAll('table')];
+        if(!tables.length){
+          rows.push(['INFO',section.textContent.trim().replace(/\s+/g,' ').slice(0,260)]);
+          rows.push([]);
+          return;
+        }
+        tables.forEach((table,index)=>{
+          const title=table.closest('section,div')?.querySelector('h2,h3,h4')?.textContent.trim()||sectionName+' 明细 '+(index+1);
+          rows.push(['TABLE',title]);
+          table.querySelectorAll('tr').forEach(tr=>{
+            rows.push([...tr.children].map(cell=>cell.textContent.trim()));
+          });
+          rows.push([]);
+        });
+      });
+      return rows.map(row=>row.map(escapeCsv).join(',')).join('\n');
+    };
+    renderModules();
+    renderPersonal();
+    renderPublic();
+    versions.querySelector('[data-save-personal-version]')?.addEventListener('click',()=>{
+      const name=doc.defaultView.prompt('请输入个人版本名称','个人版本 '+(personalVersions.length+1));
+      if(!name||!name.trim())return;
+      personalVersions.unshift({name:name.trim(),time:nowText(),scope:'当前会话 + 大盘测算报告快照'});
+      renderPersonal();
+      setFeedback('已保存个人版本：<b>'+name.trim()+'</b>。该版本仅自己可见，不进入下游引用。');
+      toast('已保存个人版本：'+name.trim());
+    });
+    versions.querySelector('[data-publish-public-version]')?.addEventListener('click',()=>{
+      publicVersions.forEach(item=>item.reference=false);
+      const item={name:'公共版本 V'+(publicVersions.length+1),time:nowText(),scope:'大盘测算完整报告',owner:'当前用户',reference:true};
+      publicVersions.unshift(item);
+      renderPublic();
+      setFeedback('已发布 <b>'+item.name+'</b>。后续编辑不会静默覆盖该公共版本，下游可主动引用。');
+      toast(item.name+' 已发布');
+    });
+    versions.querySelector('[data-public-version-list]')?.addEventListener('click',event=>{
+      const button=event.target.closest('[data-set-public-reference]');
+      if(!button)return;
+      const index=Number(button.dataset.setPublicReference);
+      publicVersions.forEach((item,i)=>item.reference=i===index);
+      renderPublic();
+      setFeedback('已将 <b>'+publicVersions[index].name+'</b> 设为当前引用版本。');
+      toast('引用版本已更新');
+    });
+    versions.querySelector('[data-download-market-csv]')?.addEventListener('click',()=>{
+      downloadCsv('market_full_report_'+sessionId+'.csv',collectMarketCsv());
+      setFeedback('已生成完整 CSV：<b>market_full_report_'+sessionId+'.csv</b>，包含大盘全周期/分阶段目标与分日目标表格明细。');
+      toast('完整 CSV 已下载');
+    });
+    versions.querySelector('[data-export-feishu]')?.addEventListener('click',()=>{
+      const docName='飞书文档｜大盘测算报告｜'+sessionId;
+      setFeedback('已生成飞书导出占位：<b>'+docName+'</b><br><a href="#" onclick="return false">https://bytedance.larkoffice.com/docx/mock-'+sessionId+'</a>');
+      toast('飞书导出占位已生成');
+    });
+    versions.querySelector('[data-share-session]')?.addEventListener('click',()=>{
+      const url=location.origin+location.pathname+'?session='+encodeURIComponent(sessionId)+'#versions';
+      setFeedback('已生成会话分享链接：<input class="share-link" readonly value="'+url+'">');
+      const input=versions.querySelector('.share-link');
+      input?.select();
+      navigator.clipboard?.writeText(url).catch(()=>{});
+      toast('会话分享链接已生成');
+    });
+    syncSidebarPanels(doc,'versions');
+  }
+
   function prepareFrame(route){
     const doc=frame.contentDocument;
     if(!doc)return;
@@ -796,6 +1171,10 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         header.top,header.topbar{display:none!important}
         body{min-height:100vh}
         main.main>h1,main.main>.subtitle,#title,#subtitle,.simple-versions>.version-hero{display:none!important}
+        .right [data-sidebar-context][hidden]{display:none!important}
+        .right .market-skill-panel,.right .industry-skill-panel{margin-bottom:16px}
+        .right .skill-grid-auto,.right .industry-skill-grid{grid-template-columns:1fr}
+        .right .progress-rail,.right .industry-progress-rail{grid-template-columns:1fr;margin-bottom:16px}
         .okr-table{background:linear-gradient(180deg,#f4f9ff 0%,#eaf4ff 100%)!important;border-color:#c9ddf5!important;box-shadow:inset 0 1px 0 #fff,0 14px 34px rgba(38,96,160,.08)!important}
         .okr-table .sheet{border:1px solid #b9d2ee!important;border-radius:14px!important;overflow:hidden!important;background:#f6fbff!important}
         .okr-table table{min-width:1250px!important;border-collapse:separate!important;border-spacing:0!important;background:#f7fbff!important}
@@ -809,12 +1188,15 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       `;
     doc.head.appendChild(style);
     if(route.src==='promo.html')enhancePromoFrame(doc);
+      if(route.src==='other.html')removeNoticePanel(doc);
     if(route.tab){
       const tab=doc.querySelector(`[data-tab="${route.tab}"]`);
       if(tab)tab.click();
     }
+      if(route.src==='other.html')removeNoticePanel(doc);
     if(route.src==='other.html'&&route.tab==='market')enhanceMarketFrame(doc);
     if(route.src==='other.html'&&route.tab==='industry')enhanceIndustryFrame(doc);
+    if(route.src==='other.html'&&route.tab==='versions')enhanceVersionsFrame(doc);
     if(route.src==='other.html')syncSidebarPanels(doc,route.tab||'');
   }
 
