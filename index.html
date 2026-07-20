@@ -95,7 +95,18 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       {id:'market-run-618-base',name:'本人历史大盘测算｜618 基础口径',time:'2026-07-20 18:18',summary:'已完成全周期、分阶段、分日目标，可被行业测算继承。'}
     ],
     industrySource:null,
-    industryMarketRun:null
+    industryMarketRun:null,
+    autoRunMarketFromInfo:false
+  };
+  const DEMO_KNOWLEDGE_OKR={
+    source:'Knowledge｜2026年618行业目标测算',
+    updatedAt:'2026-07-16 16:38',
+    summary:'知识库已启用，系统自动读取大盘 OKR 要求并作为测算报告输入。',
+    rows:[
+      ['支付 GMV','7月日均 113.04 亿，8月日均 118.19 亿，9月日均 138.85 亿','保持 618 后续承接节奏，重点校验自然水位与补贴贡献。'],
+      ['结算 GMV','7月日均 60.16 亿，8月日均 63.70 亿，9月日均 72.14 亿','结算目标承接支付 GMV，关注履约与结算周期差异。'],
+      ['发货 GMV','7月日均 83.45 亿，8月日均 85.72 亿，9月日均 98.76 亿','发货目标结合 T+2 发货率和阶段节奏拆解。']
+    ]
   };
 
   function enhanceNaturalFrame(doc){
@@ -174,6 +185,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         .confirm-history-btn{border:0;background:#4d78f4;color:#fff;border-radius:12px;min-width:190px;height:44px;padding:0 18px;font-weight:900;cursor:pointer;box-shadow:0 12px 24px rgba(77,120,244,.22)}
         .confirm-history-btn:hover{background:#416de5}
         .confirm-history-btn.confirmed{border:1px solid #9bdcb9;background:#effaf4;color:#17804d;box-shadow:none}
+        .start-market-calc-btn{border:0;background:#172b4d;color:#fff;border-radius:12px;min-width:132px;height:44px;padding:0 18px;font-weight:900;cursor:pointer;box-shadow:0 12px 24px rgba(23,43,77,.2)}
+        .start-market-calc-btn:disabled{background:#d8e1ee;color:#8b9bb1;box-shadow:none;cursor:not-allowed}
       .side-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
       .side-actions .btn{width:100%;padding:12px 10px}
       .version-meta{display:grid;gap:8px;color:#8190a8;line-height:1.55}
@@ -183,7 +196,12 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         .history-skill-card.revealed{animation:promoFadeUp .3s ease both}
       .history-card-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:8px}
       .history-card-head h2{margin:0}
+      .history-card-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
       .skill-auto-badge{border:1px solid #dce7fb;background:#f7fbff;color:#3f6be2;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:900;white-space:nowrap}
+      .manual-edit-btn,.manual-save-btn{height:34px;border-radius:10px;padding:0 13px;font-weight:900;cursor:pointer}
+      .manual-edit-btn{border:1px solid #d4e0f1;background:#fff;color:#4d78f4}
+      .manual-save-btn{border:1px solid #9bdcb9;background:#effaf4;color:#17804d}
+      .manual-save-btn[hidden]{display:none}
       .skill-pick-panel{display:flex;justify-content:flex-end;align-items:end;gap:10px;padding:0 0 12px;margin-bottom:14px;border-bottom:2px solid #d9e8fb}
       .skill-picker{width:min(100%,440px)}
       .skill-source-label{color:#7d8ba4;font-size:12px;font-weight:800;margin:0 0 5px}
@@ -206,11 +224,14 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .mapping-table tbody tr:nth-child(even) td{background:#f7fbff}
       .mapping-table .date-cell{font-weight:900;color:#23456f}
       .mapping-table .match-cell{color:#2f69d7;font-weight:900}
+      .mapping-table.editing td[contenteditable="true"]{outline:2px solid #f2a33c22;background:#fffaf1!important;box-shadow:inset 0 0 0 1px #f2a33c66}
       .mapping-chip{display:inline-flex;align-items:center;border-radius:999px;background:#edf3ff;color:#3768d8;padding:4px 8px;font-weight:800}
       .skill-result-note{margin-top:10px;color:#7d8ba4;font-size:12px}
+      .manual-edit-note{display:none;margin-top:10px;border:1px solid #f1d7a5;background:#fffaf1;color:#93620d;border-radius:10px;padding:9px 11px;font-size:12px;font-weight:800}
+      .manual-edit-note.on{display:block}
         @keyframes promoFadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
         @media(max-width:900px){.date-range,.stage-row,.bigday-row,.rival-row{grid-template-columns:1fr}.arrow{display:none}}
-        @media(max-width:900px){.info-confirm-actions,.history-card-head,.skill-pick-panel{display:block}.info-confirm-note{margin-bottom:10px}.confirm-history-btn{width:100%}.skill-picker{width:100%;margin-top:12px}.skill-source-bar,.mapping-summary,.side-actions{grid-template-columns:1fr}.lock-skill-btn{width:100%;margin-top:8px}}
+        @media(max-width:900px){.info-confirm-actions,.history-card-head,.skill-pick-panel{display:block}.history-card-actions{justify-content:flex-start;margin-top:10px}.info-confirm-note{margin-bottom:10px}.confirm-history-btn{width:100%}.skill-picker{width:100%;margin-top:12px}.skill-source-bar,.mapping-summary,.side-actions{grid-template-columns:1fr}.lock-skill-btn{width:100%;margin-top:8px}}
     `;
     doc.head.appendChild(promoStyle);
     const cards=[...main.querySelectorAll('section.card')];
@@ -311,6 +332,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         <div class="info-confirm-actions" data-info-confirm-card>
           <span class="info-confirm-note">已确认 1-4 项信息，请继续选择历史可比日</span>
           <button class="confirm-history-btn" data-confirm-info-history aria-expanded="false">确认并选择历史可比日</button>
+          <button class="start-market-calc-btn" data-start-market-calc disabled>发起测算</button>
         </div>
     `;
     mappingCard.classList.add('history-skill-card');
@@ -318,7 +340,11 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     mappingCard.innerHTML=`
       <div class="history-card-head">
         <h2><i class="num">5</i>历史参考与可比日</h2>
-        <span class="skill-auto-badge">已自动获取 2 个匹配 Skill</span>
+        <div class="history-card-actions">
+          <span class="skill-auto-badge">已自动获取 2 个匹配 Skill</span>
+          <button class="manual-edit-btn" data-edit-history-mapping>人工修正</button>
+          <button class="manual-save-btn" data-save-history-mapping hidden>保存修正</button>
+        </div>
       </div>
       <div class="skill-pick-panel">
         <div class="skill-picker">
@@ -343,6 +369,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         </table>
       </div>
       <div class="skill-result-note">说明：当前为基于 Skill 规则的初步编排结果；正式输出可由所选 Skill 的 SKILL.md 继续约束列结构、排序因子与映射解释。</div>
+      <div class="manual-edit-note" data-manual-edit-note>已进入人工修正模式：可直接点击表格单元格编辑，保存后该 mapping 将作为当前测算输入。</div>
     `;
     cards.slice(0,3).forEach(card=>card.remove());
     main.insertBefore(newContent, mappingCard);
@@ -372,10 +399,50 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         const content=(data.chipIndexes||[]).includes(index)?'<span class="mapping-chip">'+cell+'</span>':cell;
         return '<td class="'+cls+'">'+content+'</td>';
       }).join('')+'</tr>').join('');
+      doc.querySelector('.mapping-table')?.classList.remove('editing');
+      const manualNote=doc.querySelector('[data-manual-edit-note]');
+      if(manualNote){
+        manualNote.textContent='已进入人工修正模式：可直接点击表格单元格编辑，保存后该 mapping 将作为当前测算输入。';
+        manualNote.classList.remove('on');
+      }
+      doc.querySelector('[data-save-history-mapping]')?.setAttribute('hidden','');
+      const editButton=doc.querySelector('[data-edit-history-mapping]');
+      if(editButton)editButton.textContent='人工修正';
     }
     doc.querySelector('[data-history-skill]')?.addEventListener('change',event=>renderHistoryMapping(event.target.value));
+    doc.querySelector('[data-edit-history-mapping]')?.addEventListener('click',()=>{
+      const table=doc.querySelector('.mapping-table');
+      const note=doc.querySelector('[data-manual-edit-note]');
+      const saveButton=doc.querySelector('[data-save-history-mapping]');
+      table?.classList.add('editing');
+      table?.querySelectorAll('tbody td').forEach(cell=>{
+        cell.setAttribute('contenteditable','true');
+        cell.dataset.manualEditable='true';
+      });
+      note?.classList.add('on');
+      saveButton?.removeAttribute('hidden');
+      doc.querySelector('[data-edit-history-mapping]').textContent='修正中';
+      doc.defaultView.toast?.('已开启人工修正，可直接编辑表格内容');
+    });
+    doc.querySelector('[data-save-history-mapping]')?.addEventListener('click',()=>{
+      const table=doc.querySelector('.mapping-table');
+      const note=doc.querySelector('[data-manual-edit-note]');
+      table?.classList.remove('editing');
+      table?.querySelectorAll('tbody td[contenteditable="true"]').forEach(cell=>{
+        cell.removeAttribute('contenteditable');
+      });
+      if(note){
+        note.textContent='已保存人工修正：当前 mapping 将作为本次测算输入。';
+        note.classList.add('on');
+      }
+      doc.querySelector('[data-save-history-mapping]')?.setAttribute('hidden','');
+      const editButton=doc.querySelector('[data-edit-history-mapping]');
+      if(editButton)editButton.textContent='继续修正';
+      doc.defaultView.toast?.('人工修正已保存');
+    });
       const confirmCard=doc.querySelector('[data-info-confirm-card]');
       const confirmHistoryBtn=doc.querySelector('[data-confirm-info-history]');
+      const startMarketBtn=doc.querySelector('[data-start-market-calc]');
       const progress=main.querySelector('.progress');
       const revealHistoryCard=()=>{
         mappingCard.hidden=false;
@@ -397,7 +464,13 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       event.currentTarget.textContent='✓ 已锁定';
       event.currentTarget.classList.add('locked');
         if(progress)progress.innerHTML='<span>✓ 大促基本信息已确认</span><span>✓ 历史可比日已确认</span><span>✓ 可进入后续测算</span>';
+        if(startMarketBtn)startMarketBtn.disabled=false;
         doc.defaultView.toast?.('历史可比日已确认并锁定');
+    });
+    startMarketBtn?.addEventListener('click',()=>{
+      DEMO_SESSION_STATE.autoRunMarketFromInfo=true;
+      doc.defaultView.parent?.document.querySelector('[data-workspace="target"]')?.click();
+      doc.defaultView.parent?.openPage?.('market');
     });
     renderHistoryMapping('v1');
     doc.querySelector('[data-add-stage]')?.addEventListener('click',()=>{
@@ -447,10 +520,12 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       panel.hidden=context==='versions';
     });
     const skill=side.querySelector('[data-sidebar-context="'+context+'"][data-sidebar-order="skill"]');
+    const knowledge=side.querySelector('[data-sidebar-context="'+context+'"][data-sidebar-order="knowledge"]');
     const progress=side.querySelector('[data-sidebar-context="'+context+'"][data-sidebar-order="progress"]');
     const anchor=side.querySelector('.box')?.nextSibling||side.firstChild;
     if(progress)side.insertBefore(progress,anchor);
     if(skill)side.insertBefore(skill,progress||anchor);
+    if(knowledge)side.insertBefore(knowledge,skill||progress||anchor);
   }
 
     function removeNoticePanel(doc){
@@ -699,7 +774,6 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     const market=doc.querySelector('#market');
     if(!market)return;
     if(market.dataset.progressiveEnhanced==='true'){
-      doc.defaultView.updateMarketDependencyDemo?.();
       return;
     }
     market.dataset.progressiveEnhanced='true';
@@ -710,8 +784,25 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .market-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;background:linear-gradient(135deg,#f8fbff 0%,#edf5ff 100%);border:1px solid #dce8f8;border-radius:18px;padding:18px 20px}
       .market-hero h2{margin:0 0 6px;font-size:20px;color:#213b62}
       .market-hero p{margin:0;color:#7486a2;line-height:1.6}
-      .market-run-state{min-width:190px;border:1px solid #d8e6f8;background:#fff;border-radius:14px;padding:12px;color:#536987;font-weight:800}
+      .market-run-state{min-width:240px;border:1px solid #d8e6f8;background:#fff;border-radius:14px;padding:12px;color:#536987;font-weight:800;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
       .market-run-state b{display:block;color:#3268e6;font-size:18px;margin-top:4px}
+      .market-regenerate-btn{border:1px solid #245fd6;background:#245fd6;color:#fff;border-radius:10px;padding:9px 12px;font-weight:900;cursor:pointer;white-space:nowrap}
+      .market-regenerate-btn:disabled{opacity:.7;cursor:not-allowed}
+      .knowledge-okr-card{border:1px solid #dce8f8;background:linear-gradient(180deg,#fbfdff 0%,#f4f8ff 100%);border-radius:18px;padding:18px;display:grid;gap:14px}
+      .knowledge-okr-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+      .knowledge-okr-head h2{margin:0;color:#213b62}
+      .knowledge-okr-head p{margin:6px 0 0;color:#7486a2;line-height:1.55}
+      .knowledge-source-pill{border:1px solid #d9e5f5;background:#fff;border-radius:999px;padding:7px 10px;color:#426bd9;font-size:12px;font-weight:900;white-space:nowrap}
+      .knowledge-okr-grid{display:grid;gap:10px}
+      .knowledge-okr-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;border:1px solid #e0e8f5;background:#fff;border-radius:13px;padding:12px}
+      .knowledge-okr-row b{color:#213b62}
+      .knowledge-okr-row span{display:block;color:#344966;line-height:1.5}
+      .knowledge-okr-row small{display:block;margin-top:4px;color:#8292aa;line-height:1.45}
+      .knowledge-fetch-panel{display:grid;gap:10px;border:1px solid #dce8f8;background:#fbfdff;border-radius:18px;padding:16px 18px}
+      .knowledge-fetch-panel h3{margin:0;color:#213b62}
+      .knowledge-fetch-panel .knowledge-fetch-source{border:1px solid #e0e8f5;background:#fff;border-radius:12px;padding:10px;color:#344966}
+      .knowledge-fetch-panel b{display:block;color:#263a5b;margin-bottom:4px}
+      .knowledge-fetch-panel small{display:block;color:#8292aa;line-height:1.45}
       .dependency-gate{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:14px;align-items:center;border:1px solid #d7e5f8;background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 12px 28px rgba(32,72,128,.06)}
       .dependency-gate h3{margin:4px 0 6px;color:#213b62}
       .dependency-gate p{margin:0;color:#7b8ba4;line-height:1.55}
@@ -772,7 +863,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .market-placeholder{border:1px dashed #b9cff2;background:#f7fbff;border-radius:16px;padding:16px;color:#7486a2;text-align:center}
       @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
       @media(max-width:1100px){.skill-grid-auto,.progress-rail{grid-template-columns:1fr 1fr}.trend-card{grid-template-columns:1fr}}
-      @media(max-width:700px){.market-hero,.skill-panel-head,.result-head,.dependency-gate{display:block}.skill-grid-auto,.progress-rail,.dependency-picker{grid-template-columns:1fr}.market-run-state{margin-top:12px}.dependency-picker{margin-top:12px}}
+      @media(max-width:700px){.market-hero,.skill-panel-head,.result-head,.dependency-gate,.knowledge-okr-head{display:block}.skill-grid-auto,.progress-rail,.dependency-picker,.knowledge-okr-row{grid-template-columns:1fr}.market-run-state{margin-top:12px}.dependency-picker{margin-top:12px}.knowledge-source-pill{display:inline-flex;margin-top:10px}}
     `;
     doc.head.appendChild(style);
     const originalCycle=market.querySelector('#marketCycle')?.cloneNode(true);
@@ -814,15 +905,23 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
             <h2>大盘测算</h2>
             <p>填写 OKR 要求后，系统自动获取标签为「大盘测算」的全部 Skill，并一次性生成全周期、阶段和分日目标。</p>
           </div>
-          <div class="market-run-state">生成状态<b data-market-status>待测算</b></div>
+          <div class="market-run-state"><span>生成状态<b data-market-status>待测算</b></span><button class="market-regenerate-btn" data-run-market-calc>重新生成</button></div>
         </section>
         <section id="marketOkr" class="market-view">
-          <div class="section-head"><div><h2>人工输入 OKR 要求</h2><p>按月选填日均支付、结算和发货 GMV；空值不会参与测算。</p></div><div class="okr-actions"><button class="btn" data-clear-market-okr>清空</button><button class="btn primary" data-run-market-calc>保存并开始测算</button></div></div>
-          <section class="output okr-table"><div class="sheet"><table><thead><tr><th>指标 / 月份</th><th>1月</th><th>2月</th><th>3月</th><th>4月</th><th>5月</th><th>6月</th><th>7月</th><th>8月</th><th>9月</th><th>10月</th><th>11月</th><th>12月</th></tr></thead><tbody>
-            <tr><td class="group">日均支付 GMV</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td><td><input value="113.04"></td><td><input value="118.19"></td><td><input value="138.85"></td><td><input></td><td><input></td><td><input></td></tr>
-            <tr><td class="group">日均结算 GMV</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td><td><input value="60.16"></td><td><input value="63.70"></td><td><input value="72.14"></td><td><input></td><td><input></td><td><input></td></tr>
-            <tr><td class="group">日均发货 GMV</td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td><td><input value="83.45"></td><td><input value="85.72"></td><td><input value="98.76"></td><td><input></td><td><input></td><td><input></td></tr>
-          </tbody></table></div><div class="foot">单位：亿。已预填 7–9 月示例值。</div></section>
+          <section class="knowledge-okr-card">
+            <div class="knowledge-okr-head">
+              <div><h2>大盘 OKR 要求</h2><p>${DEMO_KNOWLEDGE_OKR.summary}</p></div>
+              <span class="knowledge-source-pill">已读取：${DEMO_KNOWLEDGE_OKR.source}</span>
+            </div>
+            <div class="knowledge-okr-grid">
+              ${DEMO_KNOWLEDGE_OKR.rows.map(row=>'<div class="knowledge-okr-row"><b>'+row[0]+'</b><div><span>'+row[1]+'</span><small>'+row[2]+'</small></div></div>').join('')}
+            </div>
+          </section>
+        </section>
+        <section class="knowledge-fetch-panel" data-market-knowledge>
+          <h3>自动获取知识库</h3>
+          <div class="knowledge-fetch-source"><b>${DEMO_KNOWLEDGE_OKR.source}</b><small>更新时间：${DEMO_KNOWLEDGE_OKR.updatedAt}</small></div>
+          <div class="knowledge-fetch-source"><b>读取内容</b><small>已将支付 GMV、结算 GMV、发货 GMV 的 OKR 要求加入测算报告输入。</small></div>
         </section>
         <section class="market-skill-panel" data-market-skills>
           <div class="skill-panel-head"><h3>自动获取 Skill</h3><span class="skill-pill">已识别标签：大盘测算</span></div>
@@ -843,12 +942,13 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       </div>
     `;
     const runBtn=market.querySelector('[data-run-market-calc]');
-    const clearBtn=market.querySelector('[data-clear-market-okr]');
     const skillPanel=market.querySelector('[data-market-skills]');
+    const knowledgePanel=market.querySelector('[data-market-knowledge]');
     const progressRail=market.querySelector('.progress-rail');
     const generated=market.querySelector('[data-generated-stack]');
     const placeholder=market.querySelector('[data-market-placeholder]');
     const status=market.querySelector('[data-market-status]');
+    moveSidebarPanel(doc, knowledgePanel, 'market', 'knowledge');
     moveSidebarPanel(doc, skillPanel, 'market', 'skill');
     moveSidebarPanel(doc, progressRail, 'market', 'progress');
     attachModuleExportPanel(doc,'market',{sidebarContext:true,context:'market'});
@@ -887,7 +987,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     const resetMarketGeneration=()=>{
       market.dataset.runStarted='false';
       status.textContent='待测算';
-      runBtn.textContent='保存并开始测算';
+      runBtn.textContent='重新生成';
       skillPanel.classList.remove('on');
       generated.classList.remove('on');
       placeholder.style.display='';
@@ -895,10 +995,6 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       market.querySelectorAll('[data-block]').forEach(block=>block.classList.remove('show'));
       runBtn.disabled=false;
     };
-    clearBtn?.addEventListener('click',()=>{
-      market.querySelectorAll('.okr-table input').forEach(input=>input.value='');
-      doc.defaultView.tip ? doc.defaultView.tip('OKR 输入已清空') : null;
-    });
     runBtn?.addEventListener('click',(event)=>{
       if(event&&!event.isTrusted&&market.dataset.allowProgrammaticRun!=='true')return;
       market.dataset.runStarted='true';
@@ -935,7 +1031,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
                 steps.forEach((step,i)=>step.querySelector('span').textContent=i===2?'结果已就绪':'已生成');
             steps.forEach(step=>step.classList.remove('active'));
             status.textContent='已完成';
-            runBtn.textContent='重新生成测算';
+            runBtn.textContent='重新生成';
             runBtn.disabled=false;
             DEMO_SESSION_STATE.previousMarket.unshift({
               id:'market-run-'+Date.now(),
@@ -948,6 +1044,14 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       });
     });
     resetMarketGeneration();
+    if(DEMO_SESSION_STATE.autoRunMarketFromInfo){
+      DEMO_SESSION_STATE.autoRunMarketFromInfo=false;
+      doc.defaultView.setTimeout(()=>{
+        market.dataset.allowProgrammaticRun='true';
+        runBtn?.click();
+        market.dataset.allowProgrammaticRun='false';
+      },180);
+    }
   }
 
   function enhanceIndustryFrame(doc){
@@ -967,17 +1071,6 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .industry-hero p{margin:0;color:#7486a2;line-height:1.6}
       .industry-run-state{min-width:190px;border:1px solid #d8e6f8;background:#fff;border-radius:14px;padding:12px;color:#536987;font-weight:800}
       .industry-run-state b{display:block;color:#3268e6;font-size:18px;margin-top:4px}
-      .industry-dependency{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(340px,.9fr);gap:14px;align-items:center;border:1px solid #d7e5f8;background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 12px 28px rgba(32,72,128,.06)}
-      .industry-dependency h3{margin:4px 0 6px;color:#213b62}
-      .industry-dependency p{margin:0;color:#7b8ba4;line-height:1.55}
-      .industry-dependency .dependency-kicker{font-size:12px;font-weight:900;color:#3268e6;letter-spacing:.04em}
-      .industry-dependency-controls{display:grid;gap:10px}
-      .industry-dependency-controls select{min-width:0;border:1px solid #cfddf0;background:#f7fbff;border-radius:12px;padding:10px;color:#324d6b;font-weight:800}
-      .industry-dependency-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-      .industry-dependency-buttons button{border:1px solid #d4e1f3;background:#fff;border-radius:12px;padding:10px 12px;color:#31506f;font-weight:900;cursor:pointer}
-      .industry-dependency-buttons button.primary{background:#245fd6;border-color:#245fd6;color:#fff}
-      .industry-dependency-summary{grid-column:1/-1;border:1px solid #dce8f8;background:#f7fbff;border-radius:13px;padding:10px 12px;color:#687b95;line-height:1.5}
-      .industry-dependency-summary b{color:#245fd6}
       .industry-skill-panel{display:block;border:1px solid #dce8f8;background:#fbfdff;border-radius:18px;padding:16px 18px}
       .industry-skill-panel.on{display:block;animation:fadeUp .28s ease both}
       .industry-skill-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
@@ -999,7 +1092,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .industry-original-output>.industry-view.hidden{display:block!important}
       .industry-placeholder{border:1px dashed #b9cff2;background:#f7fbff;border-radius:16px;padding:16px;color:#7486a2;text-align:center}
       @media(max-width:1100px){.industry-skill-grid,.industry-progress-rail{grid-template-columns:1fr 1fr}}
-      @media(max-width:700px){.industry-hero,.skill-panel-head,.result-head,.industry-dependency{display:block}.industry-skill-grid,.industry-progress-rail,.industry-dependency-buttons{grid-template-columns:1fr}.industry-run-state,.industry-dependency-controls{margin-top:12px}}
+      @media(max-width:700px){.industry-hero,.skill-panel-head,.result-head{display:block}.industry-skill-grid,.industry-progress-rail{grid-template-columns:1fr}.industry-run-state{margin-top:12px}}
     `;
     doc.head.appendChild(style);
     const originalInput=industry.querySelector('#industryInput')?.cloneNode(true);
@@ -1015,7 +1108,6 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         inputButton.dataset.runIndustryCalc='true';
       }
     }
-    const previousMarketOptions=DEMO_SESSION_STATE.previousMarket.map(item=>'<option value="'+item.id+'">'+item.name+'</option>').join('');
     industry.innerHTML=`
       <div class="industry-progressive">
         <section class="industry-hero">
@@ -1024,21 +1116,6 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
             <p>填写并确认行业目标测算输入项后，系统自动获取标签为「行业测算」的全部 Skill，并生成全周期、阶段和分日目标。</p>
           </div>
           <div class="industry-run-state">生成状态<b data-industry-status>待测算</b></div>
-        </section>
-        <section class="industry-dependency" data-industry-dependency>
-          <div>
-            <span class="dependency-kicker">UPSTREAM OR MANUAL</span>
-            <h3>选择行业测算输入来源</h3>
-            <p>可以继承本人之前已经测算好的大盘测算内容，也可以直接手动输入必要信息后继续测算。</p>
-          </div>
-          <div class="industry-dependency-controls">
-            <select data-industry-market-run>${previousMarketOptions}</select>
-            <div class="industry-dependency-buttons">
-              <button class="primary" data-inherit-market-run>继承大盘测算</button>
-              <button data-industry-manual-input>改为手动输入</button>
-            </div>
-          </div>
-          <div class="industry-dependency-summary" data-industry-dependency-summary>待选择：继承本人历史大盘测算，或确认手动输入后，才能开始行业测算。</div>
         </section>
         <div data-industry-input-host></div>
         <section class="industry-skill-panel" data-industry-skills>
@@ -1078,10 +1155,6 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     const progressRail=industry.querySelector('.industry-progress-rail');
     const placeholder=industry.querySelector('[data-industry-placeholder]');
     const status=industry.querySelector('[data-industry-status]');
-    const industryMarketSelect=industry.querySelector('[data-industry-market-run]');
-    const industryDependencySummary=industry.querySelector('[data-industry-dependency-summary]');
-    const inheritMarketBtn=industry.querySelector('[data-inherit-market-run]');
-    const industryManualBtn=industry.querySelector('[data-industry-manual-input]');
     moveSidebarPanel(doc, skillPanel, 'industry', 'skill');
     moveSidebarPanel(doc, progressRail, 'industry', 'progress');
     attachModuleExportPanel(doc,'industry',{sidebarContext:true,context:'industry'});
@@ -1097,57 +1170,12 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       placeholder.style.display='';
       progressRail.querySelectorAll('[data-industry-gen-step]').forEach(step=>step.classList.remove('active','done'));
       industry.querySelectorAll('[data-industry-block]').forEach(block=>block.classList.remove('show'));
-      updateIndustryDependency();
-    };
-    const updateIndustryDependency=()=>{
-      const inherited=DEMO_SESSION_STATE.previousMarket.find(item=>item.id===DEMO_SESSION_STATE.industryMarketRun);
-      const source=DEMO_SESSION_STATE.industrySource;
-      if(source==='market'&&inherited){
-        industryMarketSelect.value=inherited.id;
-        industryDependencySummary.innerHTML='已继承：<b>'+inherited.name+'</b>｜'+inherited.summary;
-        if(runBtn){
-          runBtn.disabled=false;
-          if(runBtn.textContent==='请先选择输入来源')runBtn.textContent='保存并开始测算';
-        }
-        if(status.textContent==='待选择输入来源')status.textContent='待测算';
-        return;
-      }
-      if(source==='manual'){
-        industryDependencySummary.innerHTML='已选择：<b>手动输入必要信息</b>。当前行业测算不会继承大盘测算内容。';
-        if(runBtn){
-          runBtn.disabled=false;
-          if(runBtn.textContent==='请先选择输入来源')runBtn.textContent='保存并开始测算';
-        }
-        if(status.textContent==='待选择输入来源')status.textContent='待测算';
-        return;
-      }
-      industryDependencySummary.textContent='待选择：继承本人历史大盘测算，或确认手动输入后，才能开始行业测算。';
-      status.textContent='待选择输入来源';
       if(runBtn){
-        runBtn.disabled=true;
-        runBtn.textContent='请先选择输入来源';
+        runBtn.disabled=false;
       }
     };
-    doc.defaultView.updateIndustryDependencyDemo=updateIndustryDependency;
-    inheritMarketBtn?.addEventListener('click',()=>{
-      DEMO_SESSION_STATE.industrySource='market';
-      DEMO_SESSION_STATE.industryMarketRun=industryMarketSelect.value;
-      updateIndustryDependency();
-      doc.defaultView.tip?.('已继承本人历史大盘测算');
-    });
-    industryManualBtn?.addEventListener('click',()=>{
-      DEMO_SESSION_STATE.industrySource='manual';
-      DEMO_SESSION_STATE.industryMarketRun=null;
-      updateIndustryDependency();
-      doc.defaultView.tip?.('已切换为手动输入必要信息');
-    });
     runBtn?.addEventListener('click',(event)=>{
       if(event&&!event.isTrusted&&industry.dataset.allowProgrammaticRun!=='true')return;
-      if(!DEMO_SESSION_STATE.industrySource){
-        updateIndustryDependency();
-        doc.defaultView.tip?.('请先选择行业测算输入来源');
-        return;
-      }
       industry.dataset.runStarted='true';
       runBtn.disabled=true;
       runBtn.textContent='测算生成中...';
