@@ -1,0 +1,14 @@
+{
+  "name": "ai-budget-forecast-mira-replica",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite --host 0.0.0.0 --port 5187 --strictPort",
+    "preview": "vite preview --host 0.0.0.0 --port 5187 --strictPort"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  }
+}
