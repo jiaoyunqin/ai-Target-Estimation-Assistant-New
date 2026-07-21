@@ -70,7 +70,7 @@
   </section>
   <section class="workspace skills-workspace">
     <header class="workspace-head"><div><h1>技能管理</h1><p>管理所有 Agent Skill 的配置、启停和内容。</p></div><button class="blue-btn">＋ 新建/上传技能</button></header>
-    <div class="skill-main"><div class="skill-tabs"><button>全部</button><button class="on">用户技能</button><button>系统内置</button><label>⌕ <input placeholder="搜索技能..."></label></div><div class="filters restricted-filters"><span>适用业务</span><button disabled>C侧</button><button class="allowed active" data-skill-filter="business">✓ 大促</button><button disabled>其他</button><span>适用角色</span><button disabled>管理者</button><button disabled>业务</button><button class="allowed active purple" data-skill-filter="role">✓ 资管</button><button disabled>其他</button><span>场景</span><button disabled>异动归因</button><button disabled>预算消耗预估</button><button disabled>预算分配</button><button disabled>钱效健康度分析</button><button class="allowed active" data-skill-filter="scene">✓ 目标测算</button><span>标签</span><button class="allowed skill-tag active">历史可参照日选取</button><button class="allowed skill-tag active">大盘目标测算</button><button class="allowed skill-tag active">行业目标测算</button></div><div class="skill-grid" id="skillGrid"></div></div>
+    <div class="skill-main"><div class="skill-tabs"><button>全部</button><button class="on">用户技能</button><button>系统内置</button><label>⌕ <input placeholder="搜索技能..."></label></div><div class="filters restricted-filters"><span>适用业务</span><button disabled>C侧</button><button class="allowed active" data-skill-filter="business">✓ 大促</button><button disabled>其他</button><span>适用角色</span><button disabled>管理者</button><button disabled>业务</button><button class="allowed active purple" data-skill-filter="role">✓ 资管</button><button disabled>其他</button><span>场景</span><button disabled>异动归因</button><button disabled>预算消耗预估</button><button disabled>预算分配</button><button disabled>钱效健康度分析</button><button class="allowed active" data-skill-filter="scene">✓ 目标测算</button><span>标签</span><button class="allowed skill-tag active">历史参照日</button><button class="allowed skill-tag active">大盘目标</button><button class="allowed skill-tag active">行业目标</button></div><div class="skill-grid" id="skillGrid"></div></div>
   </section>
 </div>
 <div class="modal" id="knowledgeModal"><div class="modal-card"><div class="modal-head"><div><h2>新建知识资源</h2><p>从飞书文档或本地文件创建可复用知识，启用后可被目标测算引用。</p></div><button onclick="closeKnowledgeModal()">×</button></div><div class="modal-body"><div class="source-tabs"><button class="on">飞书文档</button><button>本地文件或图片</button></div><div class="source-info"><b>飞书文档</b><small>搜索 Doc、Sheet、Base、Slides 等云文档。</small></div><label class="modal-search">⌕ <input placeholder="搜索飞书文档"></label><div class="doc-list"><button>▱　钱效中心-大促&追补预算消耗预估PRD(WIP)</button><button>▱　PRD｜钱效中心 - 大促目标 AI 助手二期</button><button>▱　大促目标 AI 测算逻辑详述</button><button>▱　目标预算钱效AI_database</button><button>▱　PRD｜钱效中心 - 大促目标 AI 助手</button></div><div class="selected"><b>已选择 0 / 20</b><span>再次点击搜索结果可取消选择。</span></div></div><div class="modal-foot"><button onclick="closeKnowledgeModal()">取消</button><button class="disabled">创建所选</button></div></div></div>
@@ -99,9 +99,10 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     autoRunMarketFromInfo:false
   };
   const DEMO_KNOWLEDGE_OKR={
+    title:'2026年618行业目标测算',
     source:'Knowledge｜2026年618行业目标测算',
     updatedAt:'2026-07-16 16:38',
-    summary:'知识库已启用，系统自动读取大盘 OKR 要求并作为测算报告输入。',
+    summary:'知识库已启用，系统自动读取相关数据并作为测算报告输入。',
     rows:[
       ['支付 GMV','7月日均 113.04 亿，8月日均 118.19 亿，9月日均 138.85 亿','保持 618 后续承接节奏，重点校验自然水位与补贴贡献。'],
       ['结算 GMV','7月日均 60.16 亿，8月日均 63.70 亿，9月日均 72.14 亿','结算目标承接支付 GMV，关注履约与结算周期差异。'],
@@ -178,6 +179,51 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .upload-box{border:1px dashed #b8caf0;background:#f7faff;border-radius:13px;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:14px}
       .upload-box b{display:block;margin-bottom:4px}
       .upload-box small{color:#8392ac}
+      .doc-parse-card{position:relative}
+      .doc-parse-card .info-head{align-items:flex-start}
+      .doc-parse-card .info-head h2{margin-bottom:4px}
+      .new-doc-wrap{position:relative}
+      .new-doc-btn{height:42px;border:0;background:#071124;color:#fff;border-radius:10px;padding:0 17px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 12px 22px rgba(7,17,36,.14)}
+      .new-doc-btn span{display:inline-block;margin-left:8px;font-size:15px}
+      .new-doc-menu{position:absolute;right:0;top:48px;z-index:20;width:176px;border:1px solid #e1e8f3;background:#fff;border-radius:10px;box-shadow:0 18px 42px rgba(16,31,57,.16);padding:8px;display:grid;gap:4px}
+      .new-doc-menu[hidden]{display:none}
+      .new-doc-menu button{border:0;background:#fff;border-radius:8px;padding:11px 12px;text-align:left;color:#263a5b;font-size:14px;font-weight:800;cursor:pointer}
+      .new-doc-menu button:hover{background:#f4f8ff;color:#315ecb}
+      .doc-source-list{display:grid;gap:10px}
+      .doc-source-item{border:1px solid #dfe8f6;background:#f8fbff;border-radius:13px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+      .doc-source-item b{display:block;color:#263a5b;margin-bottom:3px}
+      .doc-source-item small{display:block;color:#8190a8;line-height:1.45}
+      .doc-source-item span{border:1px solid #bfe5ce;background:#effaf4;color:#17804d;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900}
+      .doc-custom-area{margin-top:12px;border:1px solid #e4ebf6;background:#fff;border-radius:13px;padding:12px}
+      .doc-custom-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+      .doc-custom-head b{color:#263a5b}
+      .doc-custom-list{display:grid;gap:9px}
+      .doc-custom-row{display:grid;grid-template-columns:160px minmax(0,1fr) auto;gap:9px;align-items:center}
+      .doc-custom-row input{width:100%;height:40px;border:1px solid #dfe8f6;background:#f7faff;border-radius:10px;padding:0 12px;color:#263a5b;font-weight:700;outline:none}
+      .doc-custom-row input:focus{border-color:#79a0ff;box-shadow:0 0 0 3px #4d78f414}
+      .doc-modal-mask{position:fixed;inset:0;z-index:1000;background:rgba(8,18,34,.26);display:flex;align-items:center;justify-content:center;padding:28px}
+      .doc-modal-mask[hidden]{display:none}
+      .doc-modal{width:min(860px,calc(100vw - 56px));background:#fff;border-radius:16px;box-shadow:0 24px 80px rgba(9,23,45,.22);padding:24px;position:relative}
+      .doc-modal.upload{width:min(980px,calc(100vw - 56px))}
+      .doc-modal-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px}
+      .doc-modal-head h3{margin:0;color:#111827;font-size:22px}
+      .doc-modal-close{border:0;background:transparent;color:#111827;font-size:28px;line-height:1;cursor:pointer;font-weight:900}
+      .doc-tabs{display:flex;gap:28px;margin-bottom:14px;color:#111827;font-weight:900}
+      .doc-tabs span{padding-bottom:9px}
+      .doc-tabs .active{border-bottom:2px solid #111827}
+      .doc-tabs .muted{color:#111827;opacity:.72}
+      .doc-search{height:42px;border:1px solid #dfe6f0;border-radius:9px;display:flex;align-items:center;gap:8px;padding:0 12px;color:#7f8da6;margin-bottom:12px}
+      .doc-search input{border:0;outline:none;flex:1;height:38px;color:#263a5b;font-weight:700}
+      .doc-empty{height:360px;border:1px solid #eef2f7;background:linear-gradient(180deg,#fff 0%,#fbfcff 100%);border-radius:12px;display:grid;place-items:center;text-align:center;color:#7f8da6;line-height:1.6}
+      .doc-empty-icon{font-size:54px;color:#172b4d;margin-bottom:12px}
+      .doc-modal-foot{display:flex;justify-content:flex-end;gap:12px;margin-top:18px}
+      .doc-modal-foot button{height:38px;border-radius:9px;padding:0 18px;font-weight:900;cursor:pointer}
+      .doc-modal-foot .cancel{border:1px solid #d8e1ee;background:#fff;color:#52627a}
+      .doc-modal-foot .confirm{border:0;background:#172b4d;color:#fff}
+      .doc-modal-foot .confirm:disabled{background:#d3d9e4;color:#fff;cursor:not-allowed}
+      .doc-upload-drop{height:478px;border:1px dashed #ccd7e7;background:#fbfdff;border-radius:14px;display:grid;place-items:center;text-align:center;color:#6f7f96;line-height:1.55;cursor:pointer}
+      .doc-upload-icon{width:70px;height:70px;border:1px solid #e5ebf4;background:#fff;border-radius:12px;display:grid;place-items:center;margin:0 auto 20px;color:#79879c;font-size:30px;box-shadow:0 10px 24px rgba(23,43,77,.08)}
+      .doc-upload-drop.dragging{border-color:#4d78f4;background:#f3f7ff}
         .info-confirm-actions{min-height:58px;padding:2px 2px 12px;display:flex;align-items:center;justify-content:flex-end;gap:14px}
         .info-confirm-actions.confirmed{justify-content:space-between}
         .info-confirm-note{display:none;color:#7890ad;font-weight:800}
@@ -230,7 +276,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .manual-edit-note{display:none;margin-top:10px;border:1px solid #f1d7a5;background:#fffaf1;color:#93620d;border-radius:10px;padding:9px 11px;font-size:12px;font-weight:800}
       .manual-edit-note.on{display:block}
         @keyframes promoFadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-        @media(max-width:900px){.date-range,.stage-row,.bigday-row,.rival-row{grid-template-columns:1fr}.arrow{display:none}}
+        @media(max-width:900px){.date-range,.stage-row,.bigday-row,.rival-row,.doc-custom-row{grid-template-columns:1fr}.arrow{display:none}}
         @media(max-width:900px){.info-confirm-actions,.history-card-head,.skill-pick-panel{display:block}.history-card-actions{justify-content:flex-start;margin-top:10px}.info-confirm-note{margin-bottom:10px}.confirm-history-btn{width:100%}.skill-picker{width:100%;margin-top:12px}.skill-source-bar,.mapping-summary,.side-actions{grid-template-columns:1fr}.lock-skill-btn{width:100%;margin-top:8px}}
     `;
     doc.head.appendChild(promoStyle);
@@ -271,7 +317,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       }
     };
     main.querySelector('.subtitle').textContent='维护大促基本信息、周期节奏、Big Day、竞对活动与预算规划，供后续测算模块统一引用。';
-    main.querySelector('.progress').innerHTML='<span>✓ 基本信息已维护</span><span>✓ 阶段 / Big Day 已配置</span><span>✓ 竞对与预算可用</span>';
+    main.querySelector('.progress')?.remove();
     const newContent=doc.createElement('div');
     newContent.innerHTML=`
       <section class="card">
@@ -311,28 +357,70 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           </div>
         </div>
       </section>
-      <section class="card">
+      <section class="card doc-parse-card" data-doc-module="rival">
         <div class="info-head">
-          <h2><i class="num">3</i>竞对信息</h2>
-          <button class="ghost-btn" data-add-rival>＋ 添加竞对</button>
+          <div><h2><i class="num">3</i>竞对信息</h2><small>通过飞书文档或本地文件解析竞对活动，资管可自定义补充。</small></div>
+          <div class="new-doc-wrap" data-doc-new-menu="rival">
+            <button class="new-doc-btn" data-toggle-doc-menu="rival">新建 <span>⌃</span></button>
+            <div class="new-doc-menu" data-doc-menu hidden>
+              <button data-open-doc-import="rival">▱ 导入飞书文档</button>
+              <button data-open-doc-upload="rival">⇧ 上传本地文件</button>
+            </div>
+          </div>
         </div>
-        <div class="rival-list">
-          <div class="rival-row"><input value="淘宝 / 天猫"><select><option>强度高</option><option>强度中</option><option>强度低</option></select><input value="618年中大促，跨店满300减50"><button class="remove-btn">删除</button></div>
-          <div class="rival-row"><input value="京东"><select><option>强度高</option><option>强度中</option><option>强度低</option></select><input value="618好物节，品类券叠加直播"><button class="remove-btn">删除</button></div>
-          <div class="rival-row"><input value="平台"><select><option>强度中</option><option>强度高</option><option>强度低</option></select><input value="说明（如满300减50）"><button class="remove-btn">删除</button></div>
+        <div class="doc-source-list" data-doc-source-list="rival">
+          <div class="doc-source-item"><div><b>618 竞对活动情报</b><small>来源：飞书文档 · 已解析淘宝/天猫、京东、平台补贴强度与活动说明</small></div><span>已解析</span></div>
+        </div>
+        <div class="doc-custom-area">
+          <div class="doc-custom-head"><b>自定义补充</b><button class="ghost-btn" data-add-custom-doc="rival">＋ 自定义添加</button></div>
+          <div class="doc-custom-list" data-custom-list="rival">
+            <div class="doc-custom-row"><input value="淘宝 / 天猫"><input value="强度高｜618年中大促，跨店满300减50"><button class="remove-btn">删除</button></div>
+          </div>
         </div>
       </section>
-      <section class="card">
-        <h2><i class="num">4</i>预算规划</h2>
-        <div class="upload-box">
-          <div><b>上传预算规划</b><small data-budget-name>支持上传分日预算规划、阶段预算或预算草稿文件</small></div>
-          <label class="btn">上传文件<input type="file" data-budget-upload hidden></label>
+      <section class="card doc-parse-card" data-doc-module="budget">
+        <div class="info-head">
+          <div><h2><i class="num">4</i>预算规划</h2><small>通过飞书文档或本地文件解析预算口径、阶段预算与分日规划，资管可自定义补充。</small></div>
+          <div class="new-doc-wrap" data-doc-new-menu="budget">
+            <button class="new-doc-btn" data-toggle-doc-menu="budget">新建 <span>⌃</span></button>
+            <div class="new-doc-menu" data-doc-menu hidden>
+              <button data-open-doc-import="budget">▱ 导入飞书文档</button>
+              <button data-open-doc-upload="budget">⇧ 上传本地文件</button>
+            </div>
+          </div>
+        </div>
+        <div class="doc-source-list" data-doc-source-list="budget">
+          <div class="doc-source-item"><div><b>618 预算规划草案</b><small>来源：飞书文档 · 已解析分日预算、阶段预算与预算口径说明</small></div><span>已解析</span></div>
+        </div>
+        <div class="doc-custom-area">
+          <div class="doc-custom-head"><b>自定义补充</b><button class="ghost-btn" data-add-custom-doc="budget">＋ 自定义添加</button></div>
+          <div class="doc-custom-list" data-custom-list="budget">
+            <div class="doc-custom-row"><input value="分日预算规划"><input value="可按阶段预算与 Big Day 权重继续调整"><button class="remove-btn">删除</button></div>
+          </div>
         </div>
       </section>
         <div class="info-confirm-actions" data-info-confirm-card>
           <span class="info-confirm-note">已确认 1-4 项信息，请继续选择历史可比日</span>
           <button class="confirm-history-btn" data-confirm-info-history aria-expanded="false">确认并选择历史可比日</button>
           <button class="start-market-calc-btn" data-start-market-calc disabled>发起测算</button>
+        </div>
+        <div class="doc-modal-mask" data-doc-import-modal hidden>
+          <div class="doc-modal">
+            <div class="doc-modal-head"><h3>导入文档</h3><button class="doc-modal-close" data-close-doc-modal>×</button></div>
+            <div class="doc-tabs"><span class="active">导入单篇文档</span><span class="muted">按知识库导入</span><span class="muted">导入云盘文件夹</span></div>
+            <label class="doc-search">⌕ <input data-doc-import-input placeholder="输入文档链接或名称，仅支持导入单篇文档"></label>
+            <div class="doc-empty"><div><div class="doc-empty-icon">▱</div><p>请在上方导入文档，用于后续任务理解项目背景与规范。<br>导入过多重复文档，可能影响效果。</p></div></div>
+            <div class="doc-modal-foot"><button class="cancel" data-close-doc-modal>取消</button><button class="confirm" data-confirm-doc-import disabled>确定导入</button></div>
+          </div>
+        </div>
+        <div class="doc-modal-mask" data-doc-upload-modal hidden>
+          <div class="doc-modal upload">
+            <div class="doc-modal-head"><h3>上传本地文件</h3><button class="doc-modal-close" data-close-doc-modal>×</button></div>
+            <div class="doc-upload-drop" data-upload-drop>
+              <div><div class="doc-upload-icon">⇧</div><p>拖拽或点击以上传文件，支持 PDF、Word、Excel 文件，<br>单篇文档小于 50M，每次最多上传 100 篇</p></div>
+              <input type="file" data-local-doc-upload accept=".pdf,.doc,.docx,.xls,.xlsx" hidden>
+            </div>
+          </div>
         </div>
     `;
     mappingCard.classList.add('history-skill-card');
@@ -486,18 +574,118 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       row.innerHTML='<input placeholder="年 / 月 / 日"><input placeholder="关键日说明"><button class="remove-btn">删除</button>';
       doc.querySelector('.bigday-list').appendChild(row);
     });
-    doc.querySelector('[data-add-rival]')?.addEventListener('click',()=>{
-      const row=doc.createElement('div');
-      row.className='rival-row';
-      row.innerHTML='<input placeholder="竞对名称"><select><option>强度中</option><option>强度高</option><option>强度低</option></select><input placeholder="说明（如满300减50）"><button class="remove-btn">删除</button>';
-      doc.querySelector('.rival-list').appendChild(row);
+    const closeDocMenus=()=>{
+      doc.querySelectorAll('[data-doc-new-menu]').forEach(menu=>{
+        menu.classList.remove('open');
+        menu.querySelector('[data-doc-menu]')?.setAttribute('hidden','');
+      });
+    };
+    const closeDocModals=()=>{
+      doc.querySelector('[data-doc-import-modal]')?.setAttribute('hidden','');
+      doc.querySelector('[data-doc-upload-modal]')?.setAttribute('hidden','');
+    };
+    const moduleLabel=module=>module==='budget'?'预算规划':'竞对信息';
+    const appendParsedSource=(module,sourceType,name)=>{
+      const list=doc.querySelector('[data-doc-source-list="'+module+'"]');
+      if(!list)return;
+      const item=doc.createElement('div');
+      item.className='doc-source-item';
+      const content=doc.createElement('div');
+      const title=doc.createElement('b');
+      title.textContent=name;
+      const desc=doc.createElement('small');
+      desc.textContent='来源：'+sourceType+' · 已解析并加入'+moduleLabel(module);
+      const state=doc.createElement('span');
+      state.textContent='已解析';
+      content.append(title,desc);
+      item.append(content,state);
+      list.appendChild(item);
+      doc.defaultView.toast?.('已解析并加入'+moduleLabel(module));
+    };
+    doc.querySelectorAll('[data-toggle-doc-menu]').forEach(button=>{
+      button.addEventListener('click',event=>{
+        event.stopPropagation();
+        const wrap=button.closest('[data-doc-new-menu]');
+        const menu=wrap?.querySelector('[data-doc-menu]');
+        const nextOpen=menu?.hasAttribute('hidden');
+        closeDocMenus();
+        if(nextOpen){
+          wrap?.classList.add('open');
+          menu?.removeAttribute('hidden');
+        }
+      });
+    });
+    doc.querySelectorAll('[data-open-doc-import]').forEach(button=>{
+      button.addEventListener('click',()=>{
+        main.dataset.activeDocModule=button.dataset.openDocImport;
+        closeDocMenus();
+        const input=doc.querySelector('[data-doc-import-input]');
+        const confirm=doc.querySelector('[data-confirm-doc-import]');
+        if(input)input.value='';
+        if(confirm)confirm.disabled=true;
+        doc.querySelector('[data-doc-import-modal]')?.removeAttribute('hidden');
+        input?.focus();
+      });
+    });
+    doc.querySelectorAll('[data-open-doc-upload]').forEach(button=>{
+      button.addEventListener('click',()=>{
+        main.dataset.activeDocModule=button.dataset.openDocUpload;
+        closeDocMenus();
+        doc.querySelector('[data-doc-upload-modal]')?.removeAttribute('hidden');
+      });
+    });
+    doc.querySelectorAll('[data-close-doc-modal]').forEach(button=>button.addEventListener('click',closeDocModals));
+    doc.querySelector('[data-doc-import-input]')?.addEventListener('input',event=>{
+      const confirm=doc.querySelector('[data-confirm-doc-import]');
+      if(confirm)confirm.disabled=!event.target.value.trim();
+    });
+    doc.querySelector('[data-confirm-doc-import]')?.addEventListener('click',()=>{
+      const input=doc.querySelector('[data-doc-import-input]');
+      const name=input?.value.trim();
+      if(!name)return;
+      appendParsedSource(main.dataset.activeDocModule||'rival','飞书文档',name);
+      closeDocModals();
+    });
+    const uploadInput=doc.querySelector('[data-local-doc-upload]');
+    const uploadDrop=doc.querySelector('[data-upload-drop]');
+    uploadDrop?.addEventListener('click',()=>uploadInput?.click());
+    uploadDrop?.addEventListener('dragover',event=>{
+      event.preventDefault();
+      uploadDrop.classList.add('dragging');
+    });
+    uploadDrop?.addEventListener('dragleave',()=>uploadDrop.classList.remove('dragging'));
+    uploadDrop?.addEventListener('drop',event=>{
+      event.preventDefault();
+      uploadDrop.classList.remove('dragging');
+      const file=event.dataTransfer?.files?.[0];
+      if(file){
+        appendParsedSource(main.dataset.activeDocModule||'rival','本地文件',file.name);
+        closeDocModals();
+      }
+    });
+    uploadInput?.addEventListener('change',event=>{
+      const file=event.target.files?.[0];
+      if(file){
+        appendParsedSource(main.dataset.activeDocModule||'rival','本地文件',file.name);
+        closeDocModals();
+        event.target.value='';
+      }
+    });
+    doc.querySelectorAll('[data-add-custom-doc]').forEach(button=>{
+      button.addEventListener('click',()=>{
+        const module=button.dataset.addCustomDoc;
+        const row=doc.createElement('div');
+        row.className='doc-custom-row';
+        row.innerHTML=module==='budget'
+          ?'<input placeholder="预算项"><input placeholder="预算规划说明"><button class="remove-btn">删除</button>'
+          :'<input placeholder="竞对名称"><input placeholder="活动/强度说明/起止日期"><button class="remove-btn">删除</button>';
+        doc.querySelector('[data-custom-list="'+module+'"]')?.appendChild(row);
+      });
     });
     doc.addEventListener('click',event=>{
-      if(event.target.classList.contains('remove-btn'))event.target.closest('.stage-row,.bigday-row,.rival-row')?.remove();
-    });
-    doc.querySelector('[data-budget-upload]')?.addEventListener('change',event=>{
-      const file=event.target.files?.[0];
-      if(file)doc.querySelector('[data-budget-name]').textContent='已选择：'+file.name;
+      if(!event.target.closest('.new-doc-wrap'))closeDocMenus();
+      if(event.target.classList.contains('remove-btn'))event.target.closest('.stage-row,.bigday-row,.rival-row,.doc-custom-row')?.remove();
+      if(event.target.matches('[data-doc-import-modal],[data-doc-upload-modal]'))closeDocModals();
     });
   }
 
@@ -774,6 +962,17 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     const market=doc.querySelector('#market');
     if(!market)return;
     if(market.dataset.progressiveEnhanced==='true'){
+      if(DEMO_SESSION_STATE.autoRunMarketFromInfo){
+        DEMO_SESSION_STATE.autoRunMarketFromInfo=false;
+        const runBtn=market.querySelector('[data-run-market-calc]');
+        if(runBtn&&!runBtn.disabled){
+          doc.defaultView.setTimeout(()=>{
+            market.dataset.allowProgrammaticRun='true';
+            runBtn.click();
+            market.dataset.allowProgrammaticRun='false';
+          },80);
+        }
+      }
       return;
     }
     market.dataset.progressiveEnhanced='true';
@@ -788,20 +987,10 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .market-run-state b{display:block;color:#3268e6;font-size:18px;margin-top:4px}
       .market-regenerate-btn{border:1px solid #245fd6;background:#245fd6;color:#fff;border-radius:10px;padding:9px 12px;font-weight:900;cursor:pointer;white-space:nowrap}
       .market-regenerate-btn:disabled{opacity:.7;cursor:not-allowed}
-      .knowledge-okr-card{border:1px solid #dce8f8;background:linear-gradient(180deg,#fbfdff 0%,#f4f8ff 100%);border-radius:18px;padding:18px;display:grid;gap:14px}
-      .knowledge-okr-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
-      .knowledge-okr-head h2{margin:0;color:#213b62}
-      .knowledge-okr-head p{margin:6px 0 0;color:#7486a2;line-height:1.55}
-      .knowledge-source-pill{border:1px solid #d9e5f5;background:#fff;border-radius:999px;padding:7px 10px;color:#426bd9;font-size:12px;font-weight:900;white-space:nowrap}
-      .knowledge-okr-grid{display:grid;gap:10px}
-      .knowledge-okr-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;border:1px solid #e0e8f5;background:#fff;border-radius:13px;padding:12px}
-      .knowledge-okr-row b{color:#213b62}
-      .knowledge-okr-row span{display:block;color:#344966;line-height:1.5}
-      .knowledge-okr-row small{display:block;margin-top:4px;color:#8292aa;line-height:1.45}
       .knowledge-fetch-panel{display:grid;gap:10px;border:1px solid #dce8f8;background:#fbfdff;border-radius:18px;padding:16px 18px}
       .knowledge-fetch-panel h3{margin:0;color:#213b62}
-      .knowledge-fetch-panel .knowledge-fetch-source{border:1px solid #e0e8f5;background:#fff;border-radius:12px;padding:10px;color:#344966}
-      .knowledge-fetch-panel b{display:block;color:#263a5b;margin-bottom:4px}
+      .knowledge-fetch-panel .knowledge-fetch-source{border:1px solid #e0e8f5;background:#fff;border-radius:12px;padding:12px;color:#344966}
+      .knowledge-fetch-panel b{display:block;color:#111827;margin-bottom:7px;font-size:14px;line-height:1.35}
       .knowledge-fetch-panel small{display:block;color:#8292aa;line-height:1.45}
       .dependency-gate{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:14px;align-items:center;border:1px solid #d7e5f8;background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 12px 28px rgba(32,72,128,.06)}
       .dependency-gate h3{margin:4px 0 6px;color:#213b62}
@@ -863,7 +1052,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .market-placeholder{border:1px dashed #b9cff2;background:#f7fbff;border-radius:16px;padding:16px;color:#7486a2;text-align:center}
       @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
       @media(max-width:1100px){.skill-grid-auto,.progress-rail{grid-template-columns:1fr 1fr}.trend-card{grid-template-columns:1fr}}
-      @media(max-width:700px){.market-hero,.skill-panel-head,.result-head,.dependency-gate,.knowledge-okr-head{display:block}.skill-grid-auto,.progress-rail,.dependency-picker,.knowledge-okr-row{grid-template-columns:1fr}.market-run-state{margin-top:12px}.dependency-picker{margin-top:12px}.knowledge-source-pill{display:inline-flex;margin-top:10px}}
+      @media(max-width:700px){.market-hero,.skill-panel-head,.result-head,.dependency-gate{display:block}.skill-grid-auto,.progress-rail,.dependency-picker{grid-template-columns:1fr}.market-run-state{margin-top:12px}.dependency-picker{margin-top:12px}}
     `;
     doc.head.appendChild(style);
     const originalCycle=market.querySelector('#marketCycle')?.cloneNode(true);
@@ -903,42 +1092,34 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         <section class="market-hero">
           <div>
             <h2>大盘测算</h2>
-            <p>填写 OKR 要求后，系统自动获取标签为「大盘测算」的全部 Skill，并一次性生成全周期、阶段和分日目标。</p>
+            <p>系统自动获取标签为「大盘测算」的全部 Skill，识别并调用相关数据及知识库，产出大盘全周期、阶段和分日目标。</p>
           </div>
           <div class="market-run-state"><span>生成状态<b data-market-status>待测算</b></span><button class="market-regenerate-btn" data-run-market-calc>重新生成</button></div>
         </section>
-        <section id="marketOkr" class="market-view">
-          <section class="knowledge-okr-card">
-            <div class="knowledge-okr-head">
-              <div><h2>大盘 OKR 要求</h2><p>${DEMO_KNOWLEDGE_OKR.summary}</p></div>
-              <span class="knowledge-source-pill">已读取：${DEMO_KNOWLEDGE_OKR.source}</span>
-            </div>
-            <div class="knowledge-okr-grid">
-              ${DEMO_KNOWLEDGE_OKR.rows.map(row=>'<div class="knowledge-okr-row"><b>'+row[0]+'</b><div><span>'+row[1]+'</span><small>'+row[2]+'</small></div></div>').join('')}
-            </div>
-          </section>
-        </section>
         <section class="knowledge-fetch-panel" data-market-knowledge>
           <h3>自动获取知识库</h3>
-          <div class="knowledge-fetch-source"><b>${DEMO_KNOWLEDGE_OKR.source}</b><small>更新时间：${DEMO_KNOWLEDGE_OKR.updatedAt}</small></div>
-          <div class="knowledge-fetch-source"><b>读取内容</b><small>已将支付 GMV、结算 GMV、发货 GMV 的 OKR 要求加入测算报告输入。</small></div>
+          <div class="knowledge-fetch-source">
+            <b>${DEMO_KNOWLEDGE_OKR.title}</b>
+            <small>更新时间：${DEMO_KNOWLEDGE_OKR.updatedAt}</small>
+            <small>读取内容：已将支付 GMV、结算 GMV、发货 GMV 的 OKR 要求加入测算报告输入。</small>
+          </div>
         </section>
         <section class="market-skill-panel" data-market-skills>
           <div class="skill-panel-head"><h3>自动获取 Skill</h3><span class="skill-pill">已识别标签：大盘测算</span></div>
           <div class="skill-grid-auto">
-            <div class="market-skill"><b>大盘目标测算 OKR 法</b><small>承接用户 OKR 输入，生成全周期目标与同比校验。</small><span>✓ 已获取</span></div>
+            <div class="market-skill"><b>大盘目标测算法</b><small>承接知识库与相关数据输入，生成全周期目标与同比校验。</small><span>✓ 已获取</span></div>
             <div class="market-skill"><b>自然水位 + 补贴法</b><small>融合自然水位、补贴预算、费率规划，输出支付目标。</small><span>✓ 已获取</span></div>
             <div class="market-skill"><b>发货 GMV 转换</b><small>结合 T+2 发货率与发货节奏，换算发货目标。</small><span>✓ 已获取</span></div>
             <div class="market-skill"><b>分日目标拆解</b><small>按阶段、Big Day 与历史可比期拆解每日目标。</small><span>✓ 已获取</span></div>
           </div>
         </section>
         <div class="progress-rail">
-          <div class="gen-step" data-gen-step="cycle"><b>1 全周期/阶段目标</b><span>等待 OKR 保存</span></div>
+          <div class="gen-step" data-gen-step="cycle"><b>1 全周期/阶段目标</b><span>等待知识库读取</span></div>
           <div class="gen-step" data-gen-step="daily"><b>2 分日目标</b><span>等待目标生成</span></div>
           <div class="gen-step" data-gen-step="done"><b>3 测算完成</b><span>等待拆解完成</span></div>
         </div>
         <div class="generated-stack" data-generated-stack></div>
-        <div class="market-placeholder" data-market-placeholder>填写 OKR 后点击「保存并开始测算」，系统会自动生成测算结果。</div>
+        <div class="market-placeholder" data-market-placeholder>请先在大促信息完成锁定并点击「发起测算」，系统会自动读取知识库并调用 Skill 生成测算结果。</div>
       </div>
     `;
     const runBtn=market.querySelector('[data-run-market-calc]');
@@ -1000,19 +1181,19 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       market.dataset.runStarted='true';
       runBtn.disabled=true;
       runBtn.textContent='测算生成中...';
-      status.textContent='拉取 Skill';
+      status.textContent='拉取知识库与 Skill';
       skillPanel.classList.add('on');
       placeholder.style.display='none';
       generated.classList.add('on');
       const steps=[...progressRail.querySelectorAll('[data-gen-step]')];
       const blocks=[...market.querySelectorAll('[data-block]')];
       steps.forEach(step=>step.classList.remove('active','done'));
-        steps[0].querySelector('span').textContent='等待 OKR 保存';
+        steps[0].querySelector('span').textContent='等待知识库读取';
         steps[1].querySelector('span').textContent='等待目标生成';
         steps[2].querySelector('span').textContent='等待拆解完成';
       blocks.forEach(block=>block.classList.remove('show'));
       const plan=[
-          [0,'cycle','生成全周期/阶段目标'],
+          [0,'cycle','读取知识库与 Skill'],
           [1,'daily','生成分日目标'],
           [2,null,'测算完成']
       ];
