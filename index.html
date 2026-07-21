@@ -177,6 +177,67 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     {id:'coupon-wave-2026-618',type:'飞书文档',icon:'▱',title:'2026年618大促券波次规划',owner:'营销策略组',updatedAt:'2026-07-19 13:44',refs:'0 处引用',url:'https://bytedance.larkoffice.com/docx/demo-coupon-wave-2026-618'},
     {id:'mom-baby-review-2025-618',type:'飞书文档',icon:'▱',title:'2025年母婴行业618大促发货目标达成情况数据复盘',owner:'行业运营',updatedAt:'2026-07-20 10:09',refs:'0 处引用',url:'https://bytedance.larkoffice.com/docx/demo-mom-baby-review-2025-618'}
   ];
+  const DEMO_MARKET_SKILLS=[
+    {id:'market-target',name:'大盘目标测算法',desc:'承接知识库与相关数据输入，生成全周期目标与同比校验。'},
+    {id:'natural-subsidy',name:'自然水位 + 补贴法',desc:'融合自然水位、补贴预算、费率规划，输出支付目标。'},
+    {id:'shipping-gmv',name:'发货 GMV 转换',desc:'结合 T+2 发货率与发货节奏，换算发货目标。'},
+    {id:'daily-split',name:'分日目标拆解',desc:'按阶段、Big Day 与历史可比期拆解每日目标。'}
+  ];
+  const DEMO_INDUSTRY_SKILLS=[
+    {id:'industry-target',name:'行业目标测算',desc:'承接大盘目标，生成一级/二级赛道全周期与阶段目标。'},
+    {id:'industry-daily',name:'行业分日拆解',desc:'基于行业目标和大盘分日节奏生成赛道分日目标。'}
+  ];
+  function renderSkillCallCards(skills,cardClass){
+    return skills.map((skill,index)=>`
+      <article class="${cardClass} skill-call-card" data-skill-call-card="${skill.id}" hidden>
+        <div class="skill-call-order">${String(index+1).padStart(2,'0')}</div>
+        <div class="skill-call-copy">
+          <b>${skill.name}</b>
+          <small>${skill.desc}</small>
+        </div>
+        <div class="skill-call-statuses">
+          <span class="skill-status-pill fetch" data-skill-fetch-status data-state="pending">获取状态：待获取</span>
+          <span class="skill-status-pill invoke" data-skill-invoke-status data-state="pending">调用状态：待调用</span>
+        </div>
+      </article>
+    `).join('');
+  }
+  function resetSkillCallCards(panel){
+    if(!panel)return;
+    panel.querySelector('[data-skill-call-summary]')?.replaceChildren(document.createTextNode('等待发起测算'));
+    panel.querySelectorAll('[data-skill-call-card]').forEach(card=>{
+      card.hidden=true;
+      const fetch=card.querySelector('[data-skill-fetch-status]');
+      const invoke=card.querySelector('[data-skill-invoke-status]');
+      if(fetch){
+        fetch.textContent='获取状态：待获取';
+        fetch.dataset.state='pending';
+      }
+      if(invoke){
+        invoke.textContent='调用状态：待调用';
+        invoke.dataset.state='pending';
+      }
+    });
+  }
+  function updateSkillCallCard(panel,id,options={}){
+    const card=panel?.querySelector('[data-skill-call-card="'+id+'"]');
+    if(!card)return;
+    card.hidden=false;
+    const fetch=card.querySelector('[data-skill-fetch-status]');
+    const invoke=card.querySelector('[data-skill-invoke-status]');
+    if(fetch&&options.fetchText){
+      fetch.textContent='获取状态：'+options.fetchText;
+      fetch.dataset.state=options.fetchState||'pending';
+    }
+    if(invoke&&options.invokeText){
+      invoke.textContent='调用状态：'+options.invokeText;
+      invoke.dataset.state=options.invokeState||'pending';
+    }
+  }
+  function setSkillCallSummary(panel,text){
+    const summary=panel?.querySelector('[data-skill-call-summary]');
+    if(summary)summary.textContent=text;
+  }
   function renderKnowledgeHomeList(){
     const subtabs=document.querySelector('[data-knowledge-subtabs]');
     const table=document.querySelector('[data-knowledge-resource-table]');
@@ -267,6 +328,72 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       ['发货 GMV','7月日均 83.45 亿，8月日均 85.72 亿，9月日均 98.76 亿','发货目标结合 T+2 发货率和阶段节奏拆解。']
     ]
   };
+  const TARGET_EXPLANATION_SECTIONS=[
+    {
+      title:'1. 取数与可比口径',
+      paragraphs:[
+        '本次发货 GMV 测算沿用 Step2 选定的可比期：2026 520&618大促，区间为 20260515~20260618，并按“逐日可比日 Mapping”回溯历史发货率。以采样日看，20260515 ↔ 20260515、20260602 ↔ 20260602，即大促当日发货率口径直接取对应可比日的历史发货数据。',
+        '其中，T0/T-1/T-2 发货率以及“T-2 以外支付的发货 GMV 占比”都来自可比日历史；例如 20260515 采样日使用了 shipRateT0=0.3216、shipRateTMinus1=0.1401、shipRateTMinus2=0.0136、shipRateTMinus2Outside=0.0617。GMV 侧则按路径拆分：T0 GMV 取当日预测支付 GMV，T-1/T-2 在活动期内取预测支付 GMV，期外取自然水位。'
+      ]
+    },
+    {
+      title:'2. 测算过程与公式',
+      paragraphs:[
+        '单日发货 GMV 公式为：T日发货GMV =（T0GMV×发货率T0 + T-1GMV×发货率T-1 + T-2GMV×发货率T-2）÷（1 − T-2以外占比）。本次做了分路径漂移校准，但最终采用值均为 0：T0 +0.00pp、T-1 +0.00pp、T-2 +0.00pp，即直接沿用参考日基线发货率。',
+        '这些 pp 来自“当期前一月窗口”与“主可比期前一月窗口”的逐路径均值对比：当期窗口 20260415~20260514 与可比窗口 20260415~20260514 完全一致，均值分别为 T0 36.45%、T-1 14.08%、T-2 1.34%，因此漂移为 +0.00pp/+0.00pp/+0.00pp。',
+        '以采样日 20260515 为例，代入因子：gmvT0=2627368.37、gmvTMinus1=1206070.4、gmvTMinus2=1303321.74，对应发货率 0.3216/0.1401/0.0136，以及 shipRateTMinus2Outside=0.0617，得到该日 shipGmvRaw=1099543.66；再进入阶段配平后，shipGmv=2228051.4。'
+      ]
+    },
+    {
+      title:'3. 配平逻辑与约束',
+      paragraphs:[
+        '原始测算先得到各日 shipGmvRaw，再在阶段内按等比例系数 kPhase = 阶段配平后合计 ÷ 阶段配平前合计 统一缩放到阶段目标。各阶段分别为：一阶段 kPhase=2.03、shipTarget=13060511；二阶段 kPhase=1.78、shipTarget=9206414；三阶段 kPhase=1.88、shipTarget=9874642；四阶段 kPhase=1.76、shipTarget=12191915；五阶段 kPhase=1.69、shipTarget=15546018。',
+        '例如采样日 20260611 位于五阶段，shipGmvRaw=875761.87，按五阶段 kDay=1.69 配平后为 shipGmv=1480701.3。',
+        '这里有两条恒等约束：阶段内分日发货 GMV 加总严格对齐阶段目标；各阶段合计严格对齐全周期大盘目标，即 summary.totalShipGmv=59879499.98 与 target.totalShipTarget=59879500 基本一致。'
+      ]
+    },
+    {
+      title:'4. 结果对比与业务解读',
+      paragraphs:[
+        '从漂移方向看，T0、T-1、T-2 三条路径均为 +0.00pp，整体不是“提速”也不是“放缓”，而是与可比期基本持平，说明本次没有观察到隔年物流节奏或履约基建能力的结构性变化。全周期发货 GMV 为 59879499.98 万，预测支付 GMV 为 62017408.14 万，发货/支付占比 0.97，即约 97.00%。',
+        '阶段目标上，五阶段发货目标最高，为 15546018 万；一阶段次之，为 13060511 万。全周期最高发货日已预先算出为 20260516，shipGmv=2303564.86 万；最低发货日为 20260620，shipGmv=1129813.16 万。',
+        '风险上，系统已提示“发货目标高于按发货率测算的原始量 81%，配平后各日被整体放大”，这与各阶段 kPhase 均显著大于 1 一致，建议优先复核目标合理性与仓配承接能力。另一个提示是本次虽已做 T0/T-1/T-2 漂移修正，但结果均为 +0.00pp，因此当前测算的核心敏感项不在漂移，而在目标配平强度。'
+      ]
+    }
+  ];
+
+  function ensureTargetExplanationChatStyle(doc){
+    if(doc.querySelector('[data-target-explanation-chat-style]'))return;
+    const style=doc.createElement('style');
+    style.dataset.targetExplanationChatStyle='true';
+    style.textContent=`
+      #chat.target-explanation-chat{white-space:normal!important;overflow:auto;line-height:1.68;color:#2f405a}
+      .target-explanation-chat .explanation-badge{display:inline-flex;align-items:center;border:1px solid #dbe8fb;background:#eef5ff;color:#315ecb;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:900;margin-bottom:10px}
+      .target-explanation-chat .explanation-lead{margin:0 0 18px;color:#314760;font-weight:800}
+      .target-explanation-chat h3{margin:18px 0 10px;color:#111827;font-size:18px;line-height:1.3}
+      .target-explanation-chat p{margin:0 0 12px;color:#41536c;font-size:13px;line-height:1.72}
+      .target-explanation-chat code{background:#f3f7ff;border:1px solid #dde9fb;border-radius:6px;padding:1px 5px;color:#1f3d70;font-weight:800}
+    `;
+    doc.head.appendChild(style);
+  }
+
+  function renderTargetExplanationChat(doc,moduleName){
+    const chat=doc.querySelector('#chat');
+    const title=doc.querySelector('#chatTitle');
+    if(!chat)return;
+    ensureTargetExplanationChatStyle(doc);
+    if(title)title.textContent='发货测算对话';
+    chat.classList.add('target-explanation-chat');
+    chat.innerHTML=`
+      <div class="explanation-badge">${moduleName||'测算'} · 报告已生成</div>
+      <p class="explanation-lead">已完成发货 GMV 测算：全周期发货 GMV 5987.95 亿，占预测支付 GMV 97%。发货率取自可比期「2026 520&618大促」（05/15~06/18）。已按 T0/T-1/T-2 分别叠加隔年漂移修正（T0 +0.00pp、T-1 +0.00pp、T-2 +0.00pp）。</p>
+      ${TARGET_EXPLANATION_SECTIONS.map(section=>`
+        <h3>${section.title}</h3>
+        ${section.paragraphs.map(paragraph=>'<p>'+paragraph+'</p>').join('')}
+      `).join('')}
+    `;
+    chat.scrollTop=0;
+  }
 
   function enhanceNaturalFrame(doc){
     if(!doc||doc.documentElement.dataset.naturalCleaned==='true')return;
@@ -512,9 +639,12 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .upload-box{border:1px dashed #b8caf0;background:#f7faff;border-radius:13px;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:14px}
       .upload-box b{display:block;margin-bottom:4px}
       .upload-box small{color:#8392ac}
-      .doc-parse-card{position:relative}
-      .doc-parse-card .info-head{align-items:flex-start}
-      .doc-parse-card .info-head h2{margin-bottom:4px}
+      .doc-parse-card,.schedule-doc-card{position:relative}
+      .doc-parse-card .info-head,.schedule-doc-card .info-head{align-items:flex-start}
+      .doc-parse-card .info-head h2,.schedule-doc-card .info-head h2{margin-bottom:4px}
+      .schedule-doc-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+      .schedule-source-list{margin-bottom:12px}
+      .schedule-manual-area{margin-top:12px}
       .new-doc-btn{height:42px;border:0;background:#071124;color:#fff;border-radius:10px;padding:0 17px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 12px 22px rgba(7,17,36,.14)}
       .knowledge-link-mask{position:fixed;inset:0;z-index:1100;background:rgba(17,24,39,.24);display:flex;align-items:center;justify-content:center;padding:28px}
       .knowledge-link-mask[hidden]{display:none}
@@ -644,7 +774,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .manual-edit-note{display:none;margin-top:10px;border:1px solid #f1d7a5;background:#fffaf1;color:#93620d;border-radius:10px;padding:9px 11px;font-size:12px;font-weight:800}
       .manual-edit-note.on{display:block}
         @keyframes promoFadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-        @media(max-width:900px){.date-range,.stage-row,.bigday-row,.rival-row,.doc-custom-row{grid-template-columns:1fr}.arrow{display:none}}
+        @media(max-width:900px){.date-range,.stage-row,.bigday-row,.rival-row,.doc-custom-row{grid-template-columns:1fr}.schedule-doc-actions{justify-content:flex-start}.arrow{display:none}}
         @media(max-width:900px){.info-confirm-actions,.history-card-head,.skill-pick-panel{display:block}.history-card-actions{justify-content:flex-start;margin-top:10px}.info-confirm-note{margin-bottom:10px}.confirm-history-btn{width:100%}.skill-picker{width:100%;margin-top:12px}.skill-source-bar,.mapping-summary,.side-actions{grid-template-columns:1fr}.lock-skill-btn{width:100%;margin-top:8px}}
     `;
     doc.head.appendChild(promoStyle);
@@ -702,21 +832,27 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           </div>
         </div>
       </section>
-      <section class="card">
+      <section class="card schedule-doc-card" data-doc-module="schedule">
         <div class="info-head">
-          <h2><i class="num">2</i>阶段拆分（选填）</h2>
-          <button class="ghost-btn" data-add-stage>＋ 添加阶段</button>
+          <div><h2><i class="num">2</i>阶段拆分与 Big Day（选填）</h2><small>支持添加文档解析，也可直接在下方手动填入或修改。</small></div>
+          <div class="schedule-doc-actions">
+            <button class="new-doc-btn" data-open-knowledge-picker="schedule">添加文档</button>
+          </div>
         </div>
-        <div class="stage-list">
-          <div class="stage-row"><div class="soft-field muted">一阶段</div><input value="2026/05/15"><span class="arrow">→</span><input value="2026/05/20"><button class="remove-btn">删除</button></div>
-          <div class="stage-row"><div class="soft-field muted">二阶段</div><input value="2026/05/21"><span class="arrow">→</span><input value="2026/05/26"><button class="remove-btn">删除</button></div>
-          <div class="stage-row"><div class="soft-field muted">三阶段</div><input value="2026/05/27"><span class="arrow">→</span><input value="2026/06/01"><button class="remove-btn">删除</button></div>
-          <div class="stage-row"><div class="soft-field muted">四阶段</div><input value="2026/06/02"><span class="arrow">→</span><input value="2026/06/10"><button class="remove-btn">删除</button></div>
-          <div class="stage-row"><div class="soft-field muted">五阶段</div><input value="2026/06/11"><span class="arrow">→</span><input value="2026/06/18"><button class="remove-btn">删除</button></div>
+        <div class="doc-source-list schedule-source-list" data-doc-source-list="schedule"></div>
+        <div class="doc-custom-area schedule-manual-area">
+          <div class="doc-custom-head"><b>阶段划分</b><button class="ghost-btn" data-add-stage>＋ 添加阶段</button></div>
+          <div class="stage-list">
+            <div class="stage-row"><input value="一阶段"><input value="2026/05/15"><span class="arrow">→</span><input value="2026/05/20"><button class="remove-btn">删除</button></div>
+            <div class="stage-row"><input value="二阶段"><input value="2026/05/21"><span class="arrow">→</span><input value="2026/05/26"><button class="remove-btn">删除</button></div>
+            <div class="stage-row"><input value="三阶段"><input value="2026/05/27"><span class="arrow">→</span><input value="2026/06/01"><button class="remove-btn">删除</button></div>
+            <div class="stage-row"><input value="四阶段"><input value="2026/06/02"><span class="arrow">→</span><input value="2026/06/10"><button class="remove-btn">删除</button></div>
+            <div class="stage-row"><input value="五阶段"><input value="2026/06/11"><span class="arrow">→</span><input value="2026/06/18"><button class="remove-btn">删除</button></div>
+          </div>
         </div>
-        <div style="margin-top:18px">
-          <div class="info-head">
-            <div><b style="display:block;margin-bottom:4px">Big Day 标记（选填）</b><small>可同时标记多个关键爆发日，每个日期支持补充描述备注</small></div>
+        <div class="doc-custom-area schedule-manual-area">
+          <div class="doc-custom-head">
+            <b>Big Day 标记</b>
             <button class="ghost-btn" data-add-bigday>＋ 添加 Big Day</button>
           </div>
           <div class="bigday-list">
@@ -742,17 +878,11 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       </section>
       <section class="card doc-parse-card" data-doc-module="budget">
         <div class="info-head">
-          <div><h2><i class="num">4</i>预算规划</h2><small>通过飞书文档或本地文件解析预算口径、阶段预算与分日规划，资管可自定义补充。</small></div>
+          <div><h2><i class="num">4</i>预算规划</h2><small>通过飞书文档或 Knowledge 资源解析预算口径、阶段预算与分日规划。</small></div>
             <button class="new-doc-btn" data-open-knowledge-picker="budget">添加</button>
         </div>
         <div class="doc-source-list" data-doc-source-list="budget">
           <div class="doc-source-item"><div><b>618 预算规划草案</b><small>来源：飞书文档 · 已解析分日预算、阶段预算与预算口径说明</small></div><div class="doc-source-actions"><span>已解析</span><button class="doc-source-remove" data-remove-doc-source type="button" aria-label="删除已解析资源">×</button></div></div>
-        </div>
-        <div class="doc-custom-area">
-          <div class="doc-custom-head"><b>自定义补充</b><button class="ghost-btn" data-add-custom-doc="budget">＋ 自定义添加</button></div>
-          <div class="doc-custom-list" data-custom-list="budget">
-            <div class="doc-custom-row"><input value="分日预算规划"><input value="可按阶段预算与 Big Day 权重继续调整"><button class="remove-btn">删除</button></div>
-          </div>
         </div>
       </section>
         <div class="info-confirm-actions" data-info-confirm-card>
@@ -962,7 +1092,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       const count=doc.querySelectorAll('.stage-row').length+1;
       const row=doc.createElement('div');
       row.className='stage-row';
-      row.innerHTML='<div class="soft-field muted">新增阶段 '+count+'</div><input placeholder="年 / 月 / 日"><span class="arrow">→</span><input placeholder="年 / 月 / 日"><button class="remove-btn">删除</button>';
+      row.innerHTML='<input value="新增阶段 '+count+'"><input placeholder="年 / 月 / 日"><span class="arrow">→</span><input placeholder="年 / 月 / 日"><button class="remove-btn">删除</button>';
       doc.querySelector('.stage-list').appendChild(row);
     });
     doc.querySelector('[data-add-bigday]')?.addEventListener('click',()=>{
@@ -976,7 +1106,46 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       doc.querySelector('[data-doc-upload-modal]')?.setAttribute('hidden','');
         doc.querySelector('[data-knowledge-link-modal]')?.setAttribute('hidden','');
     };
-    const moduleLabel=module=>module==='budget'?'预算规划':'竞对信息';
+    const moduleLabel=module=>({schedule:'阶段与 Big Day',budget:'预算规划',rival:'竞对信息'}[module]||'文档信息');
+    const buildScheduleStageRow=(label,start,end)=>{
+      const row=doc.createElement('div');
+      row.className='stage-row';
+      row.innerHTML='<input><input><span class="arrow">→</span><input><button class="remove-btn">删除</button>';
+      const inputs=row.querySelectorAll('input');
+      inputs[0].value=label;
+      inputs[1].value=start;
+      inputs[2].value=end;
+      return row;
+    };
+    const buildScheduleBigdayRow=(date,desc)=>{
+      const row=doc.createElement('div');
+      row.className='bigday-row';
+      row.innerHTML='<input><input><button class="remove-btn">删除</button>';
+      const inputs=row.querySelectorAll('input');
+      inputs[0].value=date;
+      inputs[1].value=desc;
+      return row;
+    };
+    const applyScheduleParse=(sourceName)=>{
+      const stageList=doc.querySelector('.stage-list');
+      const bigdayList=doc.querySelector('.bigday-list');
+      if(!stageList||!bigdayList)return;
+      const stages=[
+        ['预热蓄水期','2026/05/15','2026/05/20'],
+        ['开门红承接期','2026/05/21','2026/05/26'],
+        ['品类日加速期','2026/05/27','2026/06/01'],
+        ['返场增长期','2026/06/02','2026/06/10'],
+        ['618 爆发期','2026/06/11','2026/06/18']
+      ];
+      const bigdays=[
+        ['2026/05/20','520 预热峰值日'],
+        ['2026/06/01','品类日峰值日'],
+        ['2026/06/18','618 爆发峰值日']
+      ];
+      stageList.replaceChildren(...stages.map(item=>buildScheduleStageRow(item[0],item[1],item[2])));
+      bigdayList.replaceChildren(...bigdays.map(item=>buildScheduleBigdayRow(item[0],item[1])));
+      if(sourceName)doc.defaultView.toast?.('已解析 '+sourceName+'，阶段与 Big Day 已回填');
+    };
     const appendParsedSource=(module,sourceType,name)=>{
       const list=doc.querySelector('[data-doc-source-list="'+module+'"]');
       if(!list)return;
@@ -1001,7 +1170,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       content.append(title,desc);
       item.append(content,actions);
       list.appendChild(item);
-      doc.defaultView.toast?.('已解析并加入'+moduleLabel(module));
+      if(module==='schedule')applyScheduleParse(name);
+      else doc.defaultView.toast?.('已解析并加入'+moduleLabel(module));
     };
       const escapeKnowledgeText=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
       const getSelectedKnowledgeIds=()=>String(main.dataset.selectedKnowledgeIds||'').split(',').filter(Boolean);
@@ -1057,7 +1227,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         const item=doc.createElement('div');
         item.className='doc-source-item';
         item.dataset.linkedKnowledgeId=resource.id;
-        item.innerHTML='<div><b>'+escapeKnowledgeText(resource.title)+'</b><small>来源：Knowledge · '+escapeKnowledgeText(resource.type)+' · '+escapeKnowledgeText(resource.url)+'</small></div><div class="doc-source-actions"><span>已关联</span><button class="doc-source-remove" data-remove-doc-source type="button" aria-label="删除已关联资源">×</button></div>';
+        item.innerHTML='<div><b>'+escapeKnowledgeText(resource.title)+'</b><small>来源：Knowledge · '+escapeKnowledgeText(resource.type)+' · '+escapeKnowledgeText(resource.url)+'</small></div><div class="doc-source-actions"><span>'+(module==='schedule'?'已解析':'已关联')+'</span><button class="doc-source-remove" data-remove-doc-source type="button" aria-label="删除已关联资源">×</button></div>';
         list.appendChild(item);
         return true;
       };
@@ -1101,9 +1271,13 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         const selectedIds=getSelectedKnowledgeIds();
         let linkedCount=0;
         selectedIds.forEach(id=>{
-          if(appendKnowledgeSource(module,findKnowledgeResource(id)))linkedCount+=1;
+          const resource=findKnowledgeResource(id);
+          if(appendKnowledgeSource(module,resource)){
+            linkedCount+=1;
+            if(module==='schedule')applyScheduleParse(resource.title);
+          }
         });
-        if(linkedCount>0)doc.defaultView.toast?.('已关联 '+linkedCount+' 个知识资源到'+moduleLabel(module));
+        if(linkedCount>0&&module!=='schedule')doc.defaultView.toast?.('已关联 '+linkedCount+' 个知识资源到'+moduleLabel(module));
         main.dataset.selectedKnowledgeIds='';
         renderKnowledgeResourceList();
         updateKnowledgePicker();
@@ -1171,11 +1345,10 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     doc.querySelectorAll('[data-add-custom-doc]').forEach(button=>{
       button.addEventListener('click',()=>{
         const module=button.dataset.addCustomDoc;
+        if(module!=='rival')return;
         const row=doc.createElement('div');
         row.className='doc-custom-row';
-        row.innerHTML=module==='budget'
-          ?'<input placeholder="预算项"><input placeholder="预算规划说明"><button class="remove-btn">删除</button>'
-          :'<input placeholder="竞对名称"><input placeholder="活动/强度说明/起止日期"><button class="remove-btn">删除</button>';
+        row.innerHTML='<input placeholder="竞对名称"><input placeholder="活动/强度说明/起止日期"><button class="remove-btn">删除</button>';
         doc.querySelector('[data-custom-list="'+module+'"]')?.appendChild(row);
       });
     });
@@ -1534,11 +1707,21 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .skill-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
       .skill-panel-head h3{margin:0;color:#213b62}
       .skill-pill{border:1px solid #d9e5f5;background:#fff;border-radius:999px;padding:7px 10px;color:#426bd9;font-size:12px;font-weight:900}
-      .skill-grid-auto{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+      .skill-grid-auto{display:grid;grid-template-columns:1fr;gap:10px}
       .market-skill{border:1px solid #dce8f8;background:#f7fbff;border-radius:14px;padding:12px;min-height:86px}
       .market-skill b{display:block;color:#263a5b;margin-bottom:5px}
       .market-skill small{display:block;color:#8292aa;line-height:1.45}
-      .market-skill span{display:inline-block;margin-top:8px;color:#20a365;font-weight:900;font-size:12px}
+      .skill-call-summary{margin:-4px 0 12px;color:#7a8ba5;font-size:12px;font-weight:800;line-height:1.45}
+      .skill-call-card[hidden]{display:none!important}
+      .skill-call-card{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;animation:fadeUp .24s ease both}
+      .skill-call-order{width:28px;height:28px;border-radius:9px;background:#edf4ff;border:1px solid #d8e6fb;color:#3268e6;display:grid;place-items:center;font-size:11px;font-weight:900}
+      .skill-call-copy b{display:block;color:#263a5b;margin-bottom:5px}
+      .skill-call-copy small{display:block;color:#8292aa;line-height:1.45}
+      .skill-call-statuses{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+      .skill-status-pill{display:inline-flex;align-items:center;justify-content:center;min-height:26px;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:900;border:1px solid #dce8f8;background:#fff;color:#72839e}
+      .skill-status-pill[data-state="running"]{border-color:#b9cffb;background:#eef4ff;color:#2f69d7}
+      .skill-status-pill[data-state="success"]{border-color:#a8ddbf;background:#effaf4;color:#17804d}
+      .skill-status-pill[data-state="failed"]{border-color:#ffc7c7;background:#fff5f5;color:#d94747}
       .progress-rail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
       .gen-step{border:1px solid #dce8f8;background:#fff;border-radius:14px;padding:12px;color:#8190a8}
       .gen-step b{display:block;color:#354d70;margin-bottom:4px}
@@ -1640,11 +1823,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         </section>
         <section class="market-skill-panel" data-market-skills>
           <div class="skill-panel-head"><h3>自动获取 Skill</h3><span class="skill-pill">已识别标签：大盘测算</span></div>
+          <p class="skill-call-summary" data-skill-call-summary>等待发起测算</p>
           <div class="skill-grid-auto">
-            <div class="market-skill"><b>大盘目标测算法</b><small>承接知识库与相关数据输入，生成全周期目标与同比校验。</small><span>✓ 已获取</span></div>
-            <div class="market-skill"><b>自然水位 + 补贴法</b><small>融合自然水位、补贴预算、费率规划，输出支付目标。</small><span>✓ 已获取</span></div>
-            <div class="market-skill"><b>发货 GMV 转换</b><small>结合 T+2 发货率与发货节奏，换算发货目标。</small><span>✓ 已获取</span></div>
-            <div class="market-skill"><b>分日目标拆解</b><small>按阶段、Big Day 与历史可比期拆解每日目标。</small><span>✓ 已获取</span></div>
+            ${renderSkillCallCards(DEMO_MARKET_SKILLS,'market-skill')}
           </div>
         </section>
         <div class="progress-rail">
@@ -1707,6 +1888,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       status.textContent='待测算';
         runBtn.textContent='待测算';
       skillPanel.classList.remove('on');
+      resetSkillCallCards(skillPanel);
       generated.classList.remove('on');
       placeholder.style.display='';
       progressRail.querySelectorAll('[data-gen-step]').forEach(step=>step.classList.remove('active','done'));
@@ -1720,8 +1902,28 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       runBtn.textContent='测算生成中...';
       status.textContent='拉取知识库与 Skill';
       skillPanel.classList.add('on');
+      resetSkillCallCards(skillPanel);
+      setSkillCallSummary(skillPanel,'按报告产出顺序调用 Skill');
       placeholder.style.display='none';
       generated.classList.add('on');
+      const skillRunId=String(Date.now());
+      market.dataset.skillRunId=skillRunId;
+      [
+        {delay:90,id:'market-target',summary:'调用 01｜大盘目标测算法',fetch:'已获取',fetchState:'success',invoke:'调用中',invokeState:'running'},
+        {delay:320,id:'market-target',summary:'01｜大盘目标测算法调用成功',fetch:'已获取',fetchState:'success',invoke:'调用成功',invokeState:'success'},
+        {delay:380,id:'natural-subsidy',summary:'调用 02｜自然水位 + 补贴法',fetch:'已获取',fetchState:'success',invoke:'调用中',invokeState:'running'},
+        {delay:620,id:'natural-subsidy',summary:'02｜自然水位 + 补贴法调用成功',fetch:'已获取',fetchState:'success',invoke:'调用成功',invokeState:'success'},
+        {delay:680,id:'shipping-gmv',summary:'调用 03｜发货 GMV 转换',fetch:'已获取',fetchState:'success',invoke:'调用中',invokeState:'running'},
+        {delay:900,id:'shipping-gmv',summary:'03｜发货 GMV 转换调用成功',fetch:'已获取',fetchState:'success',invoke:'调用成功',invokeState:'success'},
+        {delay:980,id:'daily-split',summary:'调用 04｜分日目标拆解',fetch:'已获取',fetchState:'success',invoke:'调用中',invokeState:'running'},
+        {delay:1180,id:'daily-split',summary:'04｜分日目标拆解调用成功',fetch:'已获取',fetchState:'success',invoke:'调用成功',invokeState:'success'}
+      ].forEach(item=>{
+        setTimeout(()=>{
+          if(market.dataset.skillRunId!==skillRunId)return;
+          setSkillCallSummary(skillPanel,item.summary);
+          updateSkillCallCard(skillPanel,item.id,{fetchText:item.fetch,fetchState:item.fetchState,invokeText:item.invoke,invokeState:item.invokeState});
+        },item.delay);
+      });
       const steps=[...progressRail.querySelectorAll('[data-gen-step]')];
       const blocks=[...market.querySelectorAll('[data-block]')];
       steps.forEach(step=>step.classList.remove('active','done'));
@@ -1749,6 +1951,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
                 steps.forEach((step,i)=>step.querySelector('span').textContent=i===2?'结果已就绪':'已生成');
             steps.forEach(step=>step.classList.remove('active'));
             status.textContent='已完成';
+            setSkillCallSummary(skillPanel,'全部 Skill 调用成功，报告结果已就绪');
+            renderTargetExplanationChat(doc,'大盘测算');
             runBtn.textContent='重新生成';
             runBtn.disabled=false;
               DEMO_SESSION_STATE.marketCompleted=true;
@@ -1817,11 +2021,24 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         .industry-form-actions button:disabled{background:#d8e1ee;color:#8b9bb1;box-shadow:none;cursor:not-allowed}
       .industry-skill-panel{display:block;border:1px solid #dce8f8;background:#fbfdff;border-radius:18px;padding:16px 18px}
       .industry-skill-panel.on{display:block;animation:fadeUp .28s ease both}
-        .industry-skill-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+      .skill-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+      .skill-panel-head h3{margin:0;color:#213b62}
+      .skill-pill{border:1px solid #d9e5f5;background:#fff;border-radius:999px;padding:7px 10px;color:#426bd9;font-size:12px;font-weight:900}
+        .industry-skill-grid{display:grid;grid-template-columns:1fr;gap:10px}
       .industry-auto-skill{border:1px solid #dce8f8;background:#f7fbff;border-radius:14px;padding:12px;min-height:78px}
       .industry-auto-skill b{display:block;color:#263a5b;margin-bottom:5px}
       .industry-auto-skill small{display:block;color:#8292aa;line-height:1.45}
-      .industry-auto-skill span{display:inline-block;margin-top:8px;color:#20a365;font-weight:900;font-size:12px}
+      .skill-call-summary{margin:-4px 0 12px;color:#7a8ba5;font-size:12px;font-weight:800;line-height:1.45}
+      .skill-call-card[hidden]{display:none!important}
+      .skill-call-card{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;animation:fadeUp .24s ease both}
+      .skill-call-order{width:28px;height:28px;border-radius:9px;background:#edf4ff;border:1px solid #d8e6fb;color:#3268e6;display:grid;place-items:center;font-size:11px;font-weight:900}
+      .skill-call-copy b{display:block;color:#263a5b;margin-bottom:5px}
+      .skill-call-copy small{display:block;color:#8292aa;line-height:1.45}
+      .skill-call-statuses{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+      .skill-status-pill{display:inline-flex;align-items:center;justify-content:center;min-height:26px;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:900;border:1px solid #dce8f8;background:#fff;color:#72839e}
+      .skill-status-pill[data-state="running"]{border-color:#b9cffb;background:#eef4ff;color:#2f69d7}
+      .skill-status-pill[data-state="success"]{border-color:#a8ddbf;background:#effaf4;color:#17804d}
+      .skill-status-pill[data-state="failed"]{border-color:#ffc7c7;background:#fff5f5;color:#d94747}
       .industry-progress-rail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
       .industry-gen-step{border:1px solid #dce8f8;background:#fff;border-radius:14px;padding:12px;color:#8190a8}
       .industry-gen-step b{display:block;color:#354d70;margin-bottom:4px}
@@ -1891,9 +2108,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           </section>
         <section class="industry-skill-panel" data-industry-skills>
           <div class="skill-panel-head"><h3>自动获取 Skill</h3><span class="skill-pill">已识别标签：行业测算</span></div>
+          <p class="skill-call-summary" data-skill-call-summary>等待发起测算</p>
           <div class="industry-skill-grid">
-            <div class="industry-auto-skill"><b>行业目标测算</b><small>承接大盘目标，生成一级/二级赛道全周期与阶段目标。</small><span>✓ 已获取</span></div>
-            <div class="industry-auto-skill"><b>行业分日拆解</b><small>基于行业目标和大盘分日节奏生成赛道分日目标。</small><span>✓ 已获取</span></div>
+            ${renderSkillCallCards(DEMO_INDUSTRY_SKILLS,'industry-auto-skill')}
           </div>
         </section>
         <div class="industry-progress-rail">
@@ -1964,6 +2181,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         if(inputButton)inputButton.textContent='保存并开始测算';
         updateIndustryInputState();
       skillPanel.classList.remove('on');
+      resetSkillCallCards(skillPanel);
       generated.classList.remove('on');
       placeholder.style.display='';
       progressRail.querySelectorAll('[data-industry-gen-step]').forEach(step=>step.classList.remove('active','done'));
@@ -1975,23 +2193,43 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         }
     };
       const revealIndustryDaily=()=>{
-        if(!generated.classList.contains('on'))return;
+        if(!generated.classList.contains('on')||nextDailyBtn?.classList.contains('done'))return;
         const steps=[...progressRail.querySelectorAll('[data-industry-gen-step]')];
         const dailyBlock=industry.querySelector('[data-industry-block="daily"]');
-        if(dailyBlock)dailyBlock.classList.add('show');
+        const skillRunId=industry.dataset.skillRunId||String(Date.now());
+        industry.dataset.skillRunId=skillRunId;
+        status.textContent='生成分日预测';
+        setSkillCallSummary(skillPanel,'调用 02｜行业分日拆解');
+        updateSkillCallCard(skillPanel,'industry-daily',{fetchText:'已获取',fetchState:'success',invokeText:'调用中',invokeState:'running'});
         steps.forEach(step=>step.classList.remove('active'));
-        steps.forEach((step,index)=>{
-          step.classList.add('done');
-          step.querySelector('span').textContent=index===2?'已就绪':'已生成';
-        });
-        status.textContent='已完成';
+        steps[0].classList.add('done');
+        steps[0].querySelector('span').textContent='已生成';
+        steps[1].classList.add('active');
+        steps[1].querySelector('span').textContent='调用行业分日拆解';
         if(nextDailyBtn){
-          nextDailyBtn.textContent='✓ 已确认，已进入分日预测';
-          nextDailyBtn.classList.add('done');
+          nextDailyBtn.textContent='分日预测生成中...';
           nextDailyBtn.disabled=true;
         }
-        if(typeof doc.defaultView.renderIndustryChart==='function')doc.defaultView.renderIndustryChart('target', doc.querySelector('.chart-toolbar button'));
-        doc.defaultView.setTimeout(()=>dailyBlock?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        setTimeout(()=>{
+          if(industry.dataset.skillRunId!==skillRunId)return;
+          updateSkillCallCard(skillPanel,'industry-daily',{fetchText:'已获取',fetchState:'success',invokeText:'调用成功',invokeState:'success'});
+          setSkillCallSummary(skillPanel,'全部 Skill 调用成功，分日报告已就绪');
+          if(dailyBlock)dailyBlock.classList.add('show');
+          steps.forEach(step=>step.classList.remove('active'));
+          steps.forEach((step,index)=>{
+            step.classList.add('done');
+            step.querySelector('span').textContent=index===2?'已就绪':'已生成';
+          });
+          status.textContent='已完成';
+          if(nextDailyBtn){
+            nextDailyBtn.textContent='✓ 已确认，已进入分日预测';
+            nextDailyBtn.classList.add('done');
+            nextDailyBtn.disabled=true;
+          }
+          renderTargetExplanationChat(doc,'行业测算');
+          if(typeof doc.defaultView.renderIndustryChart==='function')doc.defaultView.renderIndustryChart('target', doc.querySelector('.chart-toolbar button'));
+          doc.defaultView.setTimeout(()=>dailyBlock?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        },360);
       };
       const startIndustryGeneration=event=>{
       if(event&&!event.isTrusted&&industry.dataset.allowProgrammaticRun!=='true')return;
@@ -2008,6 +2246,11 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         }
       status.textContent='拉取 Skill';
       skillPanel.classList.add('on');
+      resetSkillCallCards(skillPanel);
+      setSkillCallSummary(skillPanel,'调用 01｜行业目标测算');
+      const skillRunId=String(Date.now());
+      industry.dataset.skillRunId=skillRunId;
+      updateSkillCallCard(skillPanel,'industry-target',{fetchText:'已获取',fetchState:'success',invokeText:'调用中',invokeState:'running'});
       placeholder.style.display='none';
       generated.classList.add('on');
       const steps=[...progressRail.querySelectorAll('[data-industry-gen-step]')];
@@ -2023,6 +2266,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           nextDailyBtn.disabled=false;
         }
         setTimeout(()=>{
+          if(industry.dataset.skillRunId!==skillRunId)return;
+          updateSkillCallCard(skillPanel,'industry-target',{fetchText:'已获取',fetchState:'success',invokeText:'调用成功',invokeState:'success'});
+          setSkillCallSummary(skillPanel,'行业目标测算调用成功，等待确认分日预测');
           status.textContent='等待确认分日预测';
           steps[0].classList.add('done');
           steps[0].classList.remove('active');
@@ -2031,6 +2277,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           steps[1].querySelector('span').textContent='等待确认进入分日预测';
           const cycleBlock=industry.querySelector('[data-industry-block="cycle"]');
           if(cycleBlock)cycleBlock.classList.add('show');
+          renderTargetExplanationChat(doc,'行业测算');
           runBtn.textContent='重新生成';
           runBtn.disabled=false;
           if(inputButton){
