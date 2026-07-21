@@ -1,0 +1,72 @@
+index.html
+  s_462397ed9de44d::t_39b5ff1cb966fc 875-883,886 gitai:{"mixed_line_ranges":[],"operations":[{"operation_id":"6a5f6a7358dc2f26b9624ca2","tool_type":"agent","tool_id":"apply_patch","line_ranges":[{"Range":[875,883]},{"Single":886}]}]}
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8e3e45a38c2d81c5487b02532a438e61ce77da80",
+  "prompts": {},
+  "sessions": {
+    "s_462397ed9de44d": {
+      "agent_id": {
+        "tool": "trae",
+        "id": "6a5f646258dc2f26b9624945",
+        "model": "gpt-5.5__max"
+      },
+      "human_author": "jiaoyunqin <jiaoyunqin@users.noreply.github.com>"
+    }
+  },
+  "attestation_metadata": {
+    "index.html": [
+      {
+        "hash": "s_462397ed9de44d::t_39b5ff1cb966fc",
+        "line_ranges": [
+          {
+            "Range": [
+              875,
+              883
+            ]
+          },
+          {
+            "Single": 886
+          }
+        ],
+        "mixed_line_ranges": [],
+        "operations": [
+          {
+            "operation_id": "6a5f6a7358dc2f26b9624ca2",
+            "tool_type": "agent",
+            "tool_id": "apply_patch",
+            "line_ranges": [
+              {
+                "Range": [
+                  875,
+                  883
+                ]
+              },
+              {
+                "Single": 886
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "remote_transcripts": {
+    "s_462397ed9de44d": {
+      "tool": "trae",
+      "conversation_id": "6a5f646258dc2f26b9624945",
+      "session_id": "6a5f646258dc2f26b9624945",
+      "status": "remote_only",
+      "message": "Remote transcript resolution is not implemented yet for TRAE prompts."
+    },
+    "s_462397ed9de44d::t_39b5ff1cb966fc": {
+      "tool": "trae",
+      "conversation_id": "6a5f646258dc2f26b9624945",
+      "session_id": "6a5f646258dc2f26b9624945",
+      "status": "remote_only",
+      "message": "Remote transcript resolution is not implemented yet for TRAE prompts."
+    }
+  }
+}
