@@ -2064,8 +2064,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      .market-step-confirm.cycle-only{margin:0 16px 18px;padding:18px;background:#f8fbff;border:1px solid #dce8f8;border-radius:14px}
 	      .market-step-confirm.cycle-only button{height:42px;border-radius:12px;padding:0 18px;min-width:142px}
 	      .market-step-confirm.cycle-only button:disabled{background:linear-gradient(180deg,#8aabff,#6f93f4);color:#fff;opacity:.78;box-shadow:0 10px 20px rgba(58,113,236,.16)}
-	      .market-step-confirm.compact{padding:10px 14px 14px;background:transparent}
-	      .market-step-confirm.compact button{width:34px;height:34px;border-radius:50%;padding:0;font-size:16px;line-height:1}
+	      .market-step-confirm.daily-only{margin:0 16px 18px;padding:18px;background:#f8fbff;border:1px solid #dce8f8;border-radius:14px}
+	      .market-step-confirm.daily-only button{height:42px;border-radius:12px;padding:0 18px;min-width:142px}
+	      .market-step-confirm.daily-only button:disabled{background:linear-gradient(180deg,#8aabff,#6f93f4);color:#fff;opacity:.78;box-shadow:0 10px 20px rgba(58,113,236,.16)}
 	      .market-step-confirm button.done{border:1px solid #9bdcb9;background:#effaf4;color:#17804d;box-shadow:none;cursor:default}
 	      .market-step-confirm button:disabled{background:#d8e2f1;color:#8b9bb1;box-shadow:none;cursor:not-allowed}
 	      .market-stage-card{border:1px solid #dce8f8;background:rgba(255,255,255,.76);border-radius:22px;padding:18px 20px;box-shadow:0 16px 40px rgba(73,109,176,.1)}
@@ -2299,6 +2300,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 		      [...sourceNode.querySelectorAll(':scope > .static-module')].forEach(module=>{
 		        if(removedTitles.has(module.querySelector('.static-heading h3')?.textContent.trim()))module.remove();
 		      });
+			      sourceNode.querySelector('.cycle-lock-bar')?.remove();
 	    };
     const mountOriginalBlock=(blockName,title,subtitle,sourceNode)=>{
       if(!sourceNode)return;
@@ -2335,8 +2337,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 		        confirm.className='market-step-confirm cycle-only';
 		        confirm.innerHTML='<button data-confirm-market-stage="cycle" type="button">确认并进入分日预测</button>';
 	      }else if(blockName==='daily'){
-		        confirm.className='market-step-confirm compact';
-		        confirm.innerHTML='<button data-confirm-market-stage="daily" type="button" aria-label="确认分日目标结果">✓</button>';
+			        confirm.className='market-step-confirm daily-only';
+			        confirm.innerHTML='<button data-confirm-market-stage="daily" type="button">确认分日预测结果</button>';
 	      }
 	      if(confirm.textContent)wrapper.appendChild(confirm);
       generated.appendChild(wrapper);
@@ -2461,7 +2463,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      market.querySelectorAll('[data-confirm-market-stage]').forEach(button=>{
 	        button.disabled=false;
 	        button.classList.remove('done');
-	        button.textContent=button.dataset.confirmMarketStage==='cycle'?'确认并进入分日预测':'✓';
+	        button.textContent=button.dataset.confirmMarketStage==='cycle'?'确认并进入分日预测':'确认分日预测结果';
 	      });
 	      runBtn.disabled=!historyReady;
 	      updateMarketHistoryGate();
@@ -2553,12 +2555,12 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 		      if(cycleConfirmButton){
 		        cycleConfirmButton.disabled=true;
 		        cycleConfirmButton.classList.remove('done');
-		        cycleConfirmButton.textContent='生成中...';
+	        cycleConfirmButton.textContent='确认并进入分日预测';
 		      }
 		      if(dailyConfirmButton){
 		        dailyConfirmButton.disabled=true;
 		        dailyConfirmButton.classList.remove('done');
-			        dailyConfirmButton.textContent='✓';
+		        dailyConfirmButton.textContent='确认分日预测结果';
 		      }
 		      market.dataset.marketStage='market_target_running';
       steps.forEach(step=>step.classList.remove('active','done'));
@@ -2569,7 +2571,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 		      runMarketSkillStep({id:'market-target',order:'01',title:'支付GMV（OKR法）目标预估',stepIndex:0,blockName:'cycle',stageCard:'cycle',runningLabel:'生成全周期 / 阶段目标',doneLabel:'全周期 / 阶段目标待确认',readyStage:'market_target_ready',afterDone:()=>{
 		        if(cycleConfirmButton){
 		          cycleConfirmButton.disabled=false;
-			          cycleConfirmButton.textContent='确认并进入分日预测';
+	          cycleConfirmButton.textContent='确认并进入分日预测';
 		        }
 		      }});
 	    });
@@ -2583,13 +2585,13 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 		        const dailyButton=market.querySelector('[data-confirm-market-stage="daily"]');
 		        if(dailyButton){
 		          dailyButton.disabled=true;
-			          dailyButton.textContent='✓';
+	          dailyButton.textContent='确认分日预测结果';
 		        }
 		        market.dataset.marketStage='daily_running';
 			        runMarketSkillStep({id:'daily-split',order:'02',title:'分日目标拆解',stepIndex:1,blockName:'daily',stageCard:'daily',runningLabel:'生成分日目标',doneLabel:'分日目标待确认',readyStage:'daily_ready',afterDone:()=>{
 		          if(dailyButton){
 		            dailyButton.disabled=false;
-			            dailyButton.textContent='✓';
+			            dailyButton.textContent='确认分日预测结果';
 		          }
 		          market.querySelector('[data-block="daily"]')?.scrollIntoView({behavior:'smooth',block:'start'});
 		        }});
@@ -2606,7 +2608,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      }
 	      button.classList.add('done');
 	      button.disabled=true;
-		      button.textContent='✓';
+	      button.textContent='已确认';
 	      market.dataset.marketStage='complete';
 	      completeMarketWorkflow();
 	    });
@@ -2641,6 +2643,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         .industry-regenerate-btn{border:1px solid #245fd6;background:#245fd6;color:#fff;border-radius:10px;padding:9px 12px;font-weight:900;cursor:pointer;white-space:nowrap}
         .industry-regenerate-btn:disabled{opacity:.7;cursor:not-allowed}
         .knowledge-fetch-panel{display:grid;gap:10px;border:1px solid #dce8f8;background:#fbfdff;border-radius:18px;padding:16px 18px}
+        .knowledge-fetch-panel[hidden]{display:none!important}
         .knowledge-fetch-panel h3{margin:0;color:#213b62}
         .knowledge-fetch-panel .knowledge-fetch-source{border:1px solid #e0e8f5;background:#fff;border-radius:12px;padding:12px;color:#344966}
         .knowledge-fetch-panel b{display:block;color:#111827;margin-bottom:7px;font-size:14px;line-height:1.35}
@@ -3255,6 +3258,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       });
 	      if(knowledgePanel){
 	        knowledgePanel.hidden=true;
+	        knowledgePanel.remove();
 	      }
     moveSidebarPanel(doc, skillPanel, 'industry', 'skill');
     attachModuleExportPanel(doc,'industry',{sidebarContext:true,context:'industry'});
