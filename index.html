@@ -208,6 +208,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     panel.querySelector('[data-skill-call-summary]')?.replaceChildren(document.createTextNode('等待发起测算'));
     panel.querySelectorAll('[data-skill-call-card]').forEach(card=>{
       card.hidden=true;
+      card.dataset.callState='pending';
       const fetch=card.querySelector('[data-skill-fetch-status]');
       const invoke=card.querySelector('[data-skill-invoke-status]');
       if(fetch){
@@ -225,6 +226,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     setSkillCallSummary(panel,text);
     panel.querySelectorAll('[data-skill-call-card]').forEach(card=>{
       card.hidden=false;
+      card.dataset.callState='pending';
       card.querySelector('.skill-call-statuses')?.setAttribute('hidden','');
     });
   }
@@ -232,6 +234,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     const card=panel?.querySelector('[data-skill-call-card="'+id+'"]');
     if(!card)return;
     card.hidden=false;
+    if(options.invokeState)card.dataset.callState=options.invokeState;
     card.querySelector('.skill-call-statuses')?.removeAttribute('hidden');
     const fetch=card.querySelector('[data-skill-fetch-status]');
     const invoke=card.querySelector('[data-skill-invoke-status]');
@@ -375,6 +378,77 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       ]
     }
   ];
+  const MARKET_STATIC_EXPLANATION=`测算过程
+🎯 目标解析
+本次大促周期为 2026/05/15~2026/06/18，共 35 天，用户填写总增量目标 800 亿。
+阶段目标拆分完整，分别为：一阶段 200 亿、二阶段 96 亿、三阶段 104 亿、四阶段 120 亿、五阶段 280 亿。
+从结构看，预算明显向 开门红（5/15~5/20） 和 收官期（6/11~6/18） 倾斜，其中五阶段占总目标约 35%，说明策略是“前段起量、尾段冲刺”。
+但要注意：预测期自然水位多数单日在 110 万~235 万 区间，而填写的增量目标量级远高于历史可比期的日增量表现，目标拉力非常强，达成判断需偏保守。
+🧭 选定可比期
+我选 2026 520&618大促（planId=14） 作为主可比期。
+理由很直接：
+周期完全一致：同样是 5/15~6/18，35天。
+季节完全一致：同年同窗，温度区间、消费节奏、618节点位置都最接近。
+量级最接近：总支付 GMV 5,258.41 亿，与本次自然水位盘子最可比。
+节奏结构最贴近：历史上 5/20、5月末出现一波抬升，符合本次“520+618双节点”结构。
+不足也要说明：
+该可比期历史 incrementOverWater 主要集中在 5/15~5/31，6月后增量几乎为 0，说明它更像“前置投放型”而不是“618尾段爆发型”。
+本次计划里 5/31~6/18 有双高强度竞对，而该可比期竞对字段为空，竞对压力需要单独保守补负向弹性。
+综合给相似度 0.88：高于系统初判，但不打满分，主要扣在 竞对环境不一致 和 尾段投放形态差异。
+📈 节奏形状
+节奏权重只描述 预算增量如何分摊到每天，我不把天气、竞对、节假日揉进去。
+由于主可比期的历史增量几乎全部发生在 5/15~5/31，直接照搬会导致 6/1~6/18 权重接近 0，与本次五阶段 280 亿 的强冲刺目标明显冲突。
+所以我采用“主可比期形状 + 按阶段目标做二次校正”：
+阶段内仍保留可比期的日内起伏；
+阶段间总量严格跟随用户填写目标占比；
+尾段 6/11~6/18 明显抬高，尤其 6/18 给最高单日权重。
+最终形状特征是：
+5/15~5/20 第一波高位；
+5/21~6/10 中段平铺；
+6/11~6/18 第二波抬升，6/18 为全周期峰值。
+这样更符合本次计划本身，而不是机械复刻历史。
+🌡️ 温度弹性
+主可比期里温度大致在 21℃~25℃，而 incrementOverWater 的变化主要由活动节点驱动，不是由温度驱动。
+例如：
+5/31 温度 24.34℃，增量 3.32 亿；
+6/1 温度升到 25.26℃，增量却几乎归零，仅 374.82 万。
+这说明在大促场景下，温度对 GMV 的解释力 明显弱于活动节点与预算投放。
+因此温度弹性采用保守小值 tempBeta = 0.004，即 每 +1℃ 约 +0.4%。
+基准温度 baselineTemp 取预测期均温，约 23.3℃，这样口径稳定，也便于算法按逐日偏离量计算。
+⚔️ 竞对弹性
+本次 5/31~6/18 同时面对：
+淘宝/天猫 high
+京东 high
+按强度折算，单平台 high=3，双平台叠加意味着尾段外部压力显著高于主可比期。
+主可比期没有明确竞对记录，无法做严格回归，只能结合大促常识保守估计。
+我给出 compBeta = -0.018：
+含义是 竞对强度每 +1 档，当日 GMV 约 -1.8%；
+若算法将双 high 竞对折算为更高强度，则 5/31~6/18 会对自然水位形成持续压制。
+这个值比默认 -0.02 略温和，原因是本次本身也是大促期，平台整体消费心智被激活，竞对虽强，但不至于完全线性吞噬需求。
+📅 基线叠加
+预测温度字段里多个周六/周日被标记为 isHoliday=true，算法会按 节假日=2、周末=1、工作日=0 自动转成日历强度。
+但自然水位本身已经体现了一部分周末季节性，比如：
+6/6 自然水位 159.05 亿
+6/8 自然水位 113.68 亿
+周末天然高于工作日已较明显。
+为避免重复抬升，我把日历弹性设为 calendarBeta = 0.03，低于默认 0.05。
+含义是：
+周末强度 1，额外约 +3%
+节假日强度 2，额外约 +6%
+这更适合“自然水位已含部分周末效应”的口径。
+✅ 结论与风险
+结论一句话：本次测算可参考 2026 520&618大促 的双峰节奏，但由于目标量级远高于历史可比增量、且 5/31 后竞对双高压制，整体达成概率判断为 low。
+四个核心因子判断：
+目标拉力：最强，但也最激进；目标远超可比期历史增量规模。
+竞对强度：尾段最主要风险，尤其 5/31~6/18。
+天气：有影响，但只是弱因子，不决定成败。
+节假日：能抬升周末表现，但不足以单独覆盖高目标缺口。
+重点风险日：
+6/18 虽然会是峰值日，但同时叠加 高竞对，冲高难度最大。
+6/1~6/10 是历史可比期的“增量空窗段”，若本次中段预算执行不强，容易出现目标断层。
+建议：
+若要提高达成率，优先考虑 下调总增量目标 或 把更多预算前置到 5/30~6/3 与 6/15~6/18。
+若坚持当前目标，建议补充更强证据：如 站内资源位、达人排期、货盘爆品确定性，否则模型只能保守判断。`;
 
   function ensureTargetExplanationChatStyle(doc){
     if(doc.querySelector('[data-target-explanation-chat-style]'))return;
@@ -386,6 +460,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .target-explanation-chat .explanation-lead{margin:0 0 18px;color:#314760;font-weight:800}
       .target-explanation-chat h3{margin:18px 0 10px;color:#111827;font-size:18px;line-height:1.3}
       .target-explanation-chat p{margin:0 0 12px;color:#41536c;font-size:13px;line-height:1.72}
+      .target-explanation-chat .market-logic-text{margin:0;white-space:pre-wrap;color:#41536c;font-family:inherit;font-size:13px;line-height:1.72}
       .target-explanation-chat code{background:#f3f7ff;border:1px solid #dde9fb;border-radius:6px;padding:1px 5px;color:#1f3d70;font-weight:800}
     `;
     doc.head.appendChild(style);
@@ -396,7 +471,14 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     const title=doc.querySelector('#chatTitle');
     if(!chat)return;
     ensureTargetExplanationChatStyle(doc);
-    if(title)title.textContent='发货测算对话';
+    if(moduleName==='大盘测算'){
+      if(title)title.textContent='大盘测算助手';
+      chat.classList.add('target-explanation-chat');
+      chat.innerHTML='<div class="explanation-badge">大盘测算 · 测算过程</div><pre class="market-logic-text">'+escapeHtml(MARKET_STATIC_EXPLANATION)+'</pre>';
+      chat.scrollTop=0;
+      return;
+    }
+    if(title)title.textContent=moduleName==='行业测算'?'行业测算助手':'目标测算助手';
     chat.classList.add('target-explanation-chat');
     chat.innerHTML=`
       <div class="explanation-badge">${moduleName||'测算'} · 报告已生成</div>
@@ -407,6 +489,114 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       `).join('')}
     `;
     chat.scrollTop=0;
+  }
+
+  function enhanceModuleChatbot(doc,context){
+    if(!doc)return;
+    if(!doc.querySelector('[data-unified-chatbot-style]')){
+      const style=doc.createElement('style');
+      style.dataset.unifiedChatbotStyle='true';
+      style.textContent=`
+        .target-chatbot{background:linear-gradient(180deg,#f8fbff 0%,#eef5ff 100%)!important;border:1px solid #dfe8f5!important;border-radius:18px!important;overflow:hidden!important}
+        .target-chatbot .chatbot-head,.target-chatbot .chat-head{display:block!important;padding:16px!important;border-bottom:1px solid #dfe8f5!important;background:rgba(255,255,255,.42)}
+        .target-chatbot .target-chat-kicker{display:block;margin:0 0 6px;color:#5d7fe5;font-size:10px;font-weight:900;line-height:1;letter-spacing:.12em;text-transform:uppercase}
+        .target-chatbot .chatbot-head h3,.target-chatbot .chat-head h3{margin:0!important;color:#243a5a!important;font-size:16px!important;line-height:1.35!important;font-weight:900!important}
+        .target-chatbot .chatbot-head p,.target-chatbot .chat-head p{margin:6px 0 0!important;color:#7f8ea5!important;font-size:12px!important;line-height:1.55!important;font-weight:700!important}
+        .target-chatbot .target-new-calc{height:34px;margin:0;border:0;border-radius:10px;padding:0 12px;background:#172b4d;color:#fff;font-size:12px;font-weight:900;cursor:pointer;box-shadow:0 8px 18px rgba(23,43,77,.16);white-space:nowrap}
+        .target-chatbot .target-new-calc:hover{background:#203b65;transform:translateY(-1px)}
+        .target-chatbot[data-chat-context="info"] .chatbot-head{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:14px!important;align-items:start!important}
+        .target-chatbot[data-chat-context="info"] .target-chat-head-copy{grid-column:1;min-width:0}
+        .target-chatbot[data-chat-context="info"] .target-new-calc{grid-column:2;grid-row:1;align-self:start}
+        .target-chatbot .chat-new{display:none!important}
+        .target-chatbot .bot-msg,.target-chatbot .assistant{color:#40536f!important;font-size:13px!important;line-height:1.72!important}
+        .target-chatbot .chatbot-quick button,.target-chatbot .quick button{color:#7184a3!important;font-size:11px!important;font-weight:800!important}
+      `;
+      doc.head.appendChild(style);
+    }
+    const configs={
+      info:{
+        panel:'.chatbot-area',
+        head:'.chatbot-head',
+        title:'大促信息助手',
+        description:'维护测算公共上下文，检查信息完整度并生成历史可比日',
+        initial:'你好，我是大促信息助手。请先填写大促名称与周期，再维护阶段节奏、预算和竞对信息；我会协助检查缺项并生成历史可比日。',
+        prompts:['检查信息完整度','检查日期冲突','推荐历史可比日']
+      },
+      market:{
+        panel:'.chat-panel',
+        head:'.chat-head',
+        title:'大盘测算助手',
+        description:'解释大盘目标、阶段拆解与分日预测的测算依据',
+        initial:'你好，我是大盘测算助手。我会基于大促信息、自然水位、知识库与匹配 Skill，解释全周期、阶段及分日目标的生成过程。',
+        prompts:['查看测算口径','调整增量目标','定位风险日期','解释达成概率']
+      },
+      industry:{
+        panel:'.chat-panel',
+        head:'.chat-head',
+        title:'行业测算助手',
+        description:'解释行业目标承接、赛道配平与分日拆解逻辑',
+        initial:'你好，我是行业测算助手。我会承接大盘目标和行业资料，解释赛道目标、配平关系与分日拆解结果。',
+        prompts:['解释行业配平','查看分日节奏','定位风险赛道','追溯数据来源']
+      }
+    };
+    const config=configs[context];
+    if(!config)return;
+    const panel=doc.querySelector(config.panel);
+    const head=doc.querySelector(config.head);
+    if(!panel||!head)return;
+    const contextChanged=Boolean(panel.dataset.chatContext&&panel.dataset.chatContext!==context);
+    panel.dataset.chatContext=context;
+    panel.classList.add('target-chatbot');
+    const title=head.querySelector('h3');
+    const description=head.querySelector('p');
+    let copy=title?.parentElement;
+    if(title&&copy===head){
+      copy=doc.createElement('div');
+      copy.className='target-chat-head-copy';
+      const directKicker=head.querySelector(':scope > .target-chat-kicker');
+      head.insertBefore(copy,directKicker||title);
+      if(directKicker)copy.appendChild(directKicker);
+      copy.appendChild(title);
+      if(description?.parentElement===head)copy.appendChild(description);
+    }
+    if(!copy)copy=head;
+    let kicker=copy.querySelector('.target-chat-kicker');
+    if(!kicker){
+      kicker=doc.createElement('span');
+      kicker.className='target-chat-kicker';
+      kicker.textContent='TARGET COPILOT';
+      copy.insertBefore(kicker,title||copy.firstChild);
+    }
+    if(title)title.textContent=config.title;
+    if(description)description.textContent=config.description;
+    head.querySelector('.chat-new')?.remove();
+    const quickButtons=[...panel.querySelectorAll('.chatbot-quick button,.quick button')];
+    quickButtons.forEach((button,index)=>{
+      if(config.prompts[index])button.textContent=config.prompts[index];
+      button.hidden=!config.prompts[index];
+    });
+    const message=panel.querySelector('#promoBot,#chat');
+    if(message&&contextChanged)message.classList.remove('target-explanation-chat');
+    if(message&&(contextChanged||!message.classList.contains('target-explanation-chat')))message.textContent=config.initial;
+    const input=panel.querySelector('#promoInput,#chatInput');
+    if(input)input.placeholder=context==='info'?'输入大促信息相关问题...':'输入测算相关问题...';
+    if(context==='info'){
+        copy.classList.add('target-chat-head-copy');
+      let button=head.querySelector('.target-new-calc');
+      if(!button){
+        button=doc.createElement('button');
+        button.className='target-new-calc';
+        button.type='button';
+        button.textContent='＋ 新建测算';
+          head.appendChild(button);
+        button.addEventListener('click',()=>{
+          if(message)message.textContent=config.initial;
+          if(input)input.value='';
+          doc.defaultView.toast?.('已新建测算会话，请从大促信息开始填写');
+          doc.querySelector('[data-completion-anchor="base"]')?.scrollIntoView({behavior:'smooth',block:'start'});
+        });
+      }
+    }
   }
 
   function enhanceNaturalFrame(doc){
@@ -747,6 +937,23 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           .start-market-calc-btn.secondary:disabled{border-color:#d8e1ee;background:#f2f5f9;color:#a0abc0}
       .side-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
       .side-actions .btn{width:100%;padding:12px 10px}
+        .info-completeness{display:grid;gap:12px;background:linear-gradient(180deg,#ffffff 0%,#f6f9ff 100%)}
+        .info-complete-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+        .info-complete-head h3{margin:0;color:#263a5b}
+        .info-complete-head small{display:block;margin-top:5px;color:#7d8ba4;font-size:12px;font-weight:800}
+        .info-complete-head strong{min-width:52px;text-align:right;color:#245fd6;font-size:24px;line-height:1;font-weight:900}
+        .info-complete-bar{height:8px;border-radius:999px;background:#e7eef9;overflow:hidden}
+        .info-complete-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4d78f4,#19b978);border-radius:inherit;transition:width .28s ease}
+        .info-complete-list{display:grid;gap:8px}
+        .info-complete-item{width:100%;border:1px solid #dfe8f6;background:#fff;border-radius:12px;padding:9px 10px;display:grid;grid-template-columns:24px minmax(0,1fr);gap:9px;align-items:center;text-align:left;cursor:pointer}
+        .info-complete-item:hover{border-color:#9db8ff;background:#f8fbff}
+        .info-complete-item i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:900;background:#edf3ff;color:#315ecb}
+        .info-complete-item b{display:block;color:#2c4362;font-size:13px;margin-bottom:2px}
+        .info-complete-item small{display:block;color:#8a98ad;font-size:11px;font-weight:800}
+        .info-complete-item.done i{background:#e8f7ee;color:#17804d}
+        .info-complete-item.pending{border-style:dashed;background:#fbfdff}
+        .info-complete-item.pending i{background:#f3f6fb;color:#8b99ae}
+        .info-completeness.complete .info-complete-head strong{color:#17804d}
       .version-meta{display:grid;gap:8px;color:#8190a8;line-height:1.55}
       .version-meta b{color:#263a5b}
       .history-skill-card{background:linear-gradient(180deg,#fbfdff 0%,#f4f8ff 100%)}
@@ -779,7 +986,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .mapping-table tbody tr:nth-child(even) td{background:#f7fbff}
       .mapping-table .date-cell{font-weight:900;color:#23456f}
       .mapping-table .match-cell{color:#2f69d7;font-weight:900}
-      .mapping-table.editing td[contenteditable="true"]{outline:2px solid #f2a33c22;background:#fffaf1!important;box-shadow:inset 0 0 0 1px #f2a33c66}
+      .mapping-table.editing td{color:#9aa6b8}
+        .mapping-table.editing td[contenteditable="true"]{color:#2f69d7;outline:2px solid #f2a33c22;background:#fffaf1!important;box-shadow:inset 0 0 0 1px #f2a33c66}
       .mapping-chip{display:inline-flex;align-items:center;border-radius:999px;background:#edf3ff;color:#3768d8;padding:4px 8px;font-weight:800}
       .skill-result-note{margin-top:10px;color:#7d8ba4;font-size:12px}
       .manual-edit-note{display:none;margin-top:10px;border:1px solid #f1d7a5;background:#fffaf1;color:#93620d;border-radius:10px;padding:9px 11px;font-size:12px;font-weight:800}
@@ -829,7 +1037,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     main.querySelector('.progress')?.remove();
     const newContent=doc.createElement('div');
     newContent.innerHTML=`
-      <section class="card">
+      <section class="card" data-completion-anchor="base">
         <h2><i class="num">1</i>大促基本信息</h2>
         <div class="grid">
           <div class="field wide"><label>大促名称</label><input value="2026 520&618大促"></div>
@@ -843,7 +1051,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           </div>
         </div>
       </section>
-      <section class="card schedule-doc-card" data-doc-module="schedule">
+      <section class="card schedule-doc-card" data-doc-module="schedule" data-completion-anchor="schedule">
         <div class="info-head">
               <div><h2><i class="num">2</i>阶段节奏</h2><small>支持添加文档解析，也可直接在下方手动填入或修改。</small></div>
           <div class="schedule-doc-actions">
@@ -872,7 +1080,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           </div>
         </div>
       </section>
-      <section class="card doc-parse-card" data-doc-module="budget">
+      <section class="card doc-parse-card" data-doc-module="budget" data-completion-anchor="budget">
         <div class="info-head">
           <div><h2><i class="num">3</i>预算规划</h2><small>通过飞书文档或 Knowledge 资源解析预算口径、阶段预算与分日规划。</small></div>
             <button class="new-doc-btn" data-open-knowledge-picker="budget">添加</button>
@@ -881,7 +1089,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           <div class="doc-source-item"><div><b>618 预算规划草案</b><small>来源：飞书文档 · 已解析分日预算、阶段预算与预算口径说明</small></div><div class="doc-source-actions"><span>已解析</span><button class="doc-source-remove" data-remove-doc-source type="button" aria-label="删除已解析资源">×</button></div></div>
         </div>
       </section>
-      <section class="card doc-parse-card" data-doc-module="rival">
+      <section class="card doc-parse-card" data-doc-module="rival" data-completion-anchor="rival">
         <div class="info-head">
                 <div><h2><i class="num">4</i>竞对信息（选填）</h2><small>通过飞书文档或本地文件解析竞对活动，资管可自定义补充。</small></div>
             <button class="new-doc-btn" data-open-knowledge-picker="rival">添加</button>
@@ -942,6 +1150,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           </div>
     `;
     mappingCard.classList.add('history-skill-card');
+      mappingCard.dataset.completionAnchor='history';
       mappingCard.hidden=true;
     mappingCard.innerHTML=`
       <div class="history-card-head">
@@ -972,7 +1181,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         </table>
       </div>
       <div class="skill-result-note">说明：当前为基于 Skill 规则的初步编排结果；正式输出可由所选 Skill 的 SKILL.md 继续约束列结构、排序因子与映射解释。</div>
-      <div class="manual-edit-note" data-manual-edit-note>已进入人工修正模式：可直接点击表格单元格编辑，保存后该 mapping 将作为当前测算输入。</div>
+      <div class="manual-edit-note" data-manual-edit-note>已进入人工修正模式：仅支持修正「25年对应日期」列，保存后该 mapping 将作为当前测算输入。</div>
     `;
     cards.slice(0,3).forEach(card=>card.remove());
     main.insertBefore(newContent, mappingCard);
@@ -986,14 +1195,63 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     const side=doc.querySelector('.right');
     if(side){
       side.innerHTML=`
+          <div class="box info-completeness" data-info-completeness>
+            <div class="info-complete-head">
+              <div><h3>信息完整度</h3><small data-complete-summary>4/5 已完成</small></div>
+              <strong data-complete-percent>80%</strong>
+            </div>
+            <div class="info-complete-bar"><i data-complete-bar style="width:80%"></i></div>
+            <div class="info-complete-list">
+              <button class="info-complete-item done" data-complete-jump="base" type="button"><i>✓</i><span><b>大促基本信息</b><small>已填写名称与周期</small></span></button>
+              <button class="info-complete-item done" data-complete-jump="schedule" type="button"><i>✓</i><span><b>阶段节奏</b><small>已维护阶段与 Big Day</small></span></button>
+              <button class="info-complete-item done" data-complete-jump="budget" type="button"><i>✓</i><span><b>预算规划</b><small>已解析预算资料</small></span></button>
+              <button class="info-complete-item done" data-complete-jump="rival" type="button"><i>✓</i><span><b>竞对信息</b><small>选填项已有默认资料</small></span></button>
+              <button class="info-complete-item pending" data-complete-jump="history" data-complete-history type="button"><i>5</i><span><b>历史可比日</b><small data-complete-history-text>待产出 mapping</small></span></button>
+            </div>
+          </div>
         <div class="box">
           <h3>将被以下模块引用</h3>
-          <div class="mini"><b>大盘测算 <span>6 项</span></b><small>周期、阶段、Big Day、预算、竞对、Mapping</small></div>
-          <div class="mini"><b>行业测算 <span>5 项</span></b><small>周期、阶段、行业范围、Big Day、Mapping</small></div>
+            <div class="mini"><b>大盘测算 <span>6 项</span></b></div>
+            <div class="mini"><b>行业测算 <span>5 项</span></b></div>
         </div>
       `;
     }
     actions?.remove();
+      const updateInfoCompleteness=()=>{
+        const panel=doc.querySelector('[data-info-completeness]');
+        if(!panel)return;
+        const historyDone=Boolean(DEMO_SESSION_STATE.historyMappingReady);
+        const completed=historyDone?5:4;
+        const percent=historyDone?100:80;
+        panel.classList.toggle('complete',historyDone);
+        panel.querySelector('[data-complete-summary]').textContent=completed+'/5 已完成';
+        panel.querySelector('[data-complete-percent]').textContent=percent+'%';
+        const bar=panel.querySelector('[data-complete-bar]');
+        if(bar)bar.style.width=percent+'%';
+        const historyItem=panel.querySelector('[data-complete-history]');
+        if(historyItem){
+          historyItem.classList.toggle('done',historyDone);
+          historyItem.classList.toggle('pending',!historyDone);
+          historyItem.querySelector('i').textContent=historyDone?'✓':'5';
+        }
+        const historyText=panel.querySelector('[data-complete-history-text]');
+        if(historyText)historyText.textContent=historyDone?'mapping 已产出':'待产出 mapping';
+      };
+      doc.querySelector('[data-info-completeness]')?.addEventListener('click',event=>{
+        const button=event.target.closest('[data-complete-jump]');
+        if(!button)return;
+        const key=button.dataset.completeJump;
+        const selector={
+          base:'[data-completion-anchor="base"]',
+          schedule:'[data-completion-anchor="schedule"]',
+          budget:'[data-completion-anchor="budget"]',
+          rival:'[data-completion-anchor="rival"]',
+          history:'[data-completion-anchor="history"]'
+        }[key];
+        const target=selector?doc.querySelector(selector):null;
+        if(target&&!target.hidden)target.scrollIntoView({behavior:'smooth',block:'start'});
+      });
+      updateInfoCompleteness();
     function renderHistoryMapping(type){
       const data=historyMappings[type]||historyMappings.v1;
       const summary=doc.querySelector('[data-mapping-summary]');
@@ -1008,10 +1266,18 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         const content=(data.chipIndexes||[]).includes(index)?'<span class="mapping-chip">'+cell+'</span>':cell;
         return '<td class="'+cls+'">'+content+'</td>';
       }).join('')+'</tr>').join('');
-      doc.querySelector('.mapping-table')?.classList.remove('editing');
+        const table=doc.querySelector('.mapping-table');
+        if(table){
+          table.classList.remove('editing');
+          table.dataset.editableIndex=String(data.matchIndex);
+          table.querySelectorAll('tbody td[contenteditable="true"]').forEach(cell=>{
+            cell.removeAttribute('contenteditable');
+            delete cell.dataset.manualEditable;
+          });
+        }
       const manualNote=doc.querySelector('[data-manual-edit-note]');
       if(manualNote){
-        manualNote.textContent='已进入人工修正模式：可直接点击表格单元格编辑，保存后该 mapping 将作为当前测算输入。';
+          manualNote.textContent='已进入人工修正模式：仅支持修正「25年对应日期」列，保存后该 mapping 将作为当前测算输入。';
         manualNote.classList.remove('on');
       }
       doc.querySelector('[data-save-history-mapping]')?.setAttribute('hidden','');
@@ -1024,14 +1290,23 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       const note=doc.querySelector('[data-manual-edit-note]');
       const saveButton=doc.querySelector('[data-save-history-mapping]');
       table?.classList.add('editing');
-      table?.querySelectorAll('tbody td').forEach(cell=>{
-        cell.setAttribute('contenteditable','true');
-        cell.dataset.manualEditable='true';
+        const editableIndex=Number(table?.dataset.editableIndex??-1);
+        table?.querySelectorAll('tbody td').forEach(cell=>{
+          cell.removeAttribute('contenteditable');
+          delete cell.dataset.manualEditable;
+        });
+        table?.querySelectorAll('tbody tr').forEach(row=>{
+          const cell=row.children[editableIndex];
+          if(cell){
+            cell.setAttribute('contenteditable','true');
+            cell.dataset.manualEditable='true';
+          }
       });
+        if(note)note.textContent='已进入人工修正模式：仅支持修正「25年对应日期」列，保存后该 mapping 将作为当前测算输入。';
       note?.classList.add('on');
       saveButton?.removeAttribute('hidden');
       doc.querySelector('[data-edit-history-mapping]').textContent='修正中';
-      doc.defaultView.toast?.('已开启人工修正，可直接编辑表格内容');
+        doc.defaultView.toast?.('已开启人工修正，仅可编辑对应日期列');
     });
     doc.querySelector('[data-save-history-mapping]')?.addEventListener('click',()=>{
       const table=doc.querySelector('.mapping-table');
@@ -1039,6 +1314,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       table?.classList.remove('editing');
       table?.querySelectorAll('tbody td[contenteditable="true"]').forEach(cell=>{
         cell.removeAttribute('contenteditable');
+          delete cell.dataset.manualEditable;
       });
       if(note){
         note.textContent='已保存人工修正：当前 mapping 将作为本次测算输入。';
@@ -1061,6 +1337,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
             startIndustryBtn.disabled=false;
             startIndustryBtn.title='';
           }
+            updateInfoCompleteness();
           doc.defaultView.parent?.syncTargetWorkflowState?.();
         };
         const confirmHistoryForStart=()=>{
@@ -1069,6 +1346,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           if(progress)progress.innerHTML='<span>✓ 大促基本信息已确认</span><span>✓ 历史可比日已确认</span><span>✓ 可进入后续测算</span>';
           DEMO_SESSION_STATE.historyMappingReady=true;
           DEMO_SESSION_STATE.infoReady=true;
+            updateInfoCompleteness();
           doc.defaultView.parent?.syncTargetWorkflowState?.();
         };
       const revealHistoryCard=()=>{
@@ -1725,10 +2003,28 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .skill-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
       .skill-panel-head h3{margin:0;color:#213b62}
       .skill-pill{border:1px solid #d9e5f5;background:#fff;border-radius:999px;padding:7px 10px;color:#426bd9;font-size:12px;font-weight:900}
-      .skill-grid-auto{display:grid;grid-template-columns:1fr;gap:10px}
-      .market-skill{border:1px solid #dce8f8;background:#f7fbff;border-radius:14px;padding:12px;min-height:86px}
-      .market-skill b{display:block;color:#263a5b;margin-bottom:5px}
-      .market-skill small{display:block;color:#8292aa;line-height:1.45}
+        .skill-grid-auto{display:grid;grid-template-columns:1fr;gap:0}
+        .market-skill-panel .market-skill{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:start;border:0;background:transparent;border-radius:0;padding:2px 0 24px;min-height:0;overflow:visible}
+        .market-skill-panel .market-skill:last-child{padding-bottom:2px}
+        .market-skill-panel .market-skill::after{content:"";position:absolute;left:14px;top:30px;bottom:-1px;width:2px;background:#dce6f4;border-radius:999px;z-index:0}
+        .market-skill-panel .market-skill:last-child::after{display:none}
+        .market-skill-panel .skill-call-order{grid-column:1;grid-row:1/3;width:30px;height:30px;border:2px solid #d5e1f1;border-radius:50%;background:#fff;color:#7d8da5;box-shadow:0 0 0 5px #fbfdff;position:relative;z-index:1}
+        .market-skill-panel .skill-call-copy{grid-column:2;min-width:0}
+        .market-skill-panel .skill-call-copy b{display:block;color:#263a5b;margin:1px 0 5px;line-height:1.4}
+        .market-skill-panel .skill-call-copy small{display:block;color:#8292aa;line-height:1.45}
+        .market-skill-panel .skill-call-copy::after{content:"等待执行";display:inline-flex;margin-top:7px;color:#8b98aa;font-size:11px;font-weight:900}
+        .market-skill-panel .market-skill[data-call-state="running"] .skill-call-order{border-color:#4d78f4;background:#eef4ff;color:#245fd6;box-shadow:0 0 0 5px #fbfdff,0 0 0 8px rgba(77,120,244,.1)}
+        .market-skill-panel .market-skill[data-call-state="running"] .skill-call-copy b{color:#2455c6}
+        .market-skill-panel .market-skill[data-call-state="running"] .skill-call-copy::after{content:"执行中";color:#2f69d7}
+        .market-skill-panel .market-skill[data-call-state="running"]::after{background:linear-gradient(180deg,#4d78f4 0%,#dce6f4 100%)}
+        .market-skill-panel .market-skill[data-call-state="success"] .skill-call-order{border-color:#19a967;background:#19a967;color:transparent;box-shadow:0 0 0 5px #fbfdff;font-size:0}
+        .market-skill-panel .market-skill[data-call-state="success"] .skill-call-order::before{content:"✓";color:#fff;font-size:14px;font-weight:900}
+        .market-skill-panel .market-skill[data-call-state="success"] .skill-call-copy b{color:#145c37}
+        .market-skill-panel .market-skill[data-call-state="success"] .skill-call-copy::after{content:"执行成功";color:#17804d}
+        .market-skill-panel .market-skill[data-call-state="success"]::after{background:#73d39b}
+        .market-skill-panel .market-skill[data-call-state="failed"] .skill-call-order{border-color:#e35d5d;background:#fff2f2;color:#d94747}
+        .market-skill-panel .market-skill[data-call-state="failed"] .skill-call-copy::after{content:"执行失败";color:#d94747}
+        .market-skill-panel .skill-call-statuses{display:none!important}
       .skill-call-summary{margin:-4px 0 12px;color:#7a8ba5;font-size:12px;font-weight:800;line-height:1.45}
       .skill-call-card[hidden]{display:none!important}
       .skill-call-card{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;animation:fadeUp .24s ease both}
@@ -1798,8 +2094,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .risk-item span{color:#7f8da6;line-height:1.5}
       .market-placeholder{border:1px dashed #b9cff2;background:#f7fbff;border-radius:16px;padding:16px;color:#7486a2;text-align:center}
       @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-      @media(max-width:1100px){.market-progressive{padding-right:18px}.skill-grid-auto{grid-template-columns:1fr 1fr}.trend-card{grid-template-columns:1fr}}
-      @media(max-width:700px){.market-progressive{padding-right:0}.market-hero,.skill-panel-head,.result-head,.dependency-gate{display:block}.skill-grid-auto,.dependency-picker{grid-template-columns:1fr}.market-run-state{margin-top:12px}.dependency-picker{margin-top:12px}}
+        .progress-rail[data-market-internal-progress]{display:none!important}
+        @media(max-width:1100px){.market-progressive{padding-right:18px}.trend-card{grid-template-columns:1fr}}
+        @media(max-width:700px){.market-progressive{padding-right:0}.market-hero,.skill-panel-head,.result-head,.dependency-gate{display:block}.dependency-picker{grid-template-columns:1fr}.market-run-state{margin-top:12px}.dependency-picker{margin-top:12px}}
     `;
     doc.head.appendChild(style);
     const originalCycle=market.querySelector('#marketCycle')?.cloneNode(true);
@@ -1851,9 +2148,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
             <small>读取内容：已将支付 GMV、结算 GMV、发货 GMV 的 OKR 要求加入测算报告输入。</small>
           </div>
         </section>
-        <section class="market-skill-panel" data-market-skills>
-          <div class="skill-panel-head"><h3>自动获取 Skill</h3><span class="skill-pill">已识别标签：大盘测算</span></div>
-          <p class="skill-call-summary" data-skill-call-summary>等待发起测算</p>
+          <section class="market-skill-panel" data-market-skills>
+            <div class="skill-panel-head"><h3>Skill 执行进度</h3><span class="skill-pill">已识别标签：大盘测算</span></div>
+            <p class="skill-call-summary" data-skill-call-summary>已自动获取 4 个匹配 Skill，等待发起测算</p>
           <div class="skill-grid-auto">
             ${renderSkillCallCards(DEMO_MARKET_SKILLS,'market-skill')}
           </div>
@@ -1874,9 +2171,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     const generated=market.querySelector('[data-generated-stack]');
     const placeholder=market.querySelector('[data-market-placeholder]');
     const status=market.querySelector('[data-market-status]');
+      progressRail.dataset.marketInternalProgress='true';
     moveSidebarPanel(doc, knowledgePanel, 'market', 'knowledge');
     moveSidebarPanel(doc, skillPanel, 'market', 'skill');
-    moveSidebarPanel(doc, progressRail, 'market', 'progress');
     attachModuleExportPanel(doc,'market',{sidebarContext:true,context:'market'});
     syncSidebarPanels(doc, 'market');
     const mountOriginalBlock=(blockName,title,subtitle,sourceNode)=>{
@@ -1919,6 +2216,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         runBtn.textContent='待测算';
       skillPanel.classList.remove('on');
       resetSkillCallCards(skillPanel);
+        revealDiscoveredSkillCards(skillPanel,'已自动获取 4 个匹配 Skill，等待发起测算');
       generated.classList.remove('on');
       placeholder.style.display='';
       progressRail.querySelectorAll('[data-gen-step]').forEach(step=>step.classList.remove('active','done'));
@@ -1933,7 +2231,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       status.textContent='拉取知识库与 Skill';
       skillPanel.classList.add('on');
       resetSkillCallCards(skillPanel);
-      setSkillCallSummary(skillPanel,'按报告产出顺序调用 Skill');
+        revealDiscoveredSkillCards(skillPanel,'已自动获取 4 个匹配 Skill，开始按顺序执行');
       placeholder.style.display='none';
       generated.classList.add('on');
       const skillRunId=String(Date.now());
@@ -2858,6 +3156,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       `;
     doc.head.appendChild(style);
     if(route.src==='promo.html')enhancePromoFrame(doc);
+      if(route.src==='promo.html')enhanceModuleChatbot(doc,'info');
       if(route.src==='other.html')removeNoticePanel(doc);
     if(route.tab){
       const tab=doc.querySelector(`[data-tab="${route.tab}"]`);
@@ -2866,6 +3165,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       if(route.src==='other.html')removeNoticePanel(doc);
     if(route.src==='other.html'&&route.tab==='market')enhanceMarketFrame(doc);
     if(route.src==='other.html'&&route.tab==='industry')enhanceIndustryFrame(doc);
+      if(route.src==='other.html'&&route.tab)enhanceModuleChatbot(doc,route.tab);
     if(route.src==='other.html')syncSidebarPanels(doc,route.tab||'');
     syncTargetWorkflowState();
   }
