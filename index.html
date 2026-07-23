@@ -75,7 +75,7 @@
 .app-side{width:268px;padding:22px 16px;background:linear-gradient(180deg,#ffffff 0%,#f7fbff 100%);border-right:1px solid #dce8f8;box-shadow:8px 0 28px rgba(41,78,130,.05);overflow-y:auto}
 .app-logo{font-size:19px;letter-spacing:-.02em;color:#1d3354}
 .app-side>small{margin:5px 0 18px;color:#8a99b0;font-weight:800}
-.tree-nav{display:grid;gap:10px}
+.tree-nav{display:grid;gap:10px;padding-bottom:96px}
 .tree-section{display:grid;gap:6px}
 .tree-root,.tree-parent,.tree-leaf{width:100%;border:0;background:transparent;color:#5d6f89;border-radius:12px;display:flex;align-items:center;gap:9px;text-align:left;cursor:pointer;font-weight:900;transition:.18s ease}
 .tree-root{min-height:44px;padding:9px 11px}
@@ -102,7 +102,7 @@
 .tree-leaf.locked,.tree-parent.locked{opacity:.48}
 .tree-leaf.locked:after,.tree-parent.locked:after{content:"待解锁";margin-left:auto;color:#a4b0c2;font-size:10px;font-weight:900}
 .tree-parent:hover,.tree-leaf:hover,.tree-root:hover{background:#f2f6ff;color:#315fca}
-.app-user{position:static;margin-top:20px}
+.app-user{position:absolute;left:16px;right:16px;bottom:20px;margin-top:0;background:linear-gradient(180deg,rgba(247,251,255,.78),#f7fbff 42%,#f7fbff);z-index:2}
 .target-workspace>.top{display:none}
 .target-workspace>.frame{height:100%;background:transparent}
 .sidebar-toggle{left:256px}
@@ -110,7 +110,7 @@
 .shell.sidebar-collapsed .sidebar-toggle{left:0}
 @media(max-width:1500px){.shell{padding-left:246px}.app-side{width:246px}.sidebar-toggle{left:234px}}
 @media(max-width:1150px){.shell{padding-left:220px}.app-side{width:220px}.sidebar-toggle{left:208px}.tree-root em{display:none}}
-@media(max-width:720px){.shell{padding-left:0;padding-bottom:0}.app-side{position:relative;width:auto;height:auto;display:block;border-right:0;border-bottom:1px solid #dce8f8}.tree-nav{max-height:360px;overflow:auto}.target-workspace{height:calc(100vh - 360px);min-height:640px}}
+@media(max-width:720px){.shell{padding-left:0;padding-bottom:0}.app-side{position:relative;width:auto;height:auto;display:block;border-right:0;border-bottom:1px solid #dce8f8}.tree-nav{max-height:360px;overflow:auto;padding-bottom:0}.app-user{position:static;margin-top:16px;background:transparent}.target-workspace{height:calc(100vh - 360px);min-height:640px}}
 
 /* restricted skill filters */
 .restricted-filters button:disabled{color:#b8c0cc;background:#f4f5f7;border-color:#eaedf1;cursor:not-allowed;opacity:.65}.restricted-filters .allowed{cursor:pointer}.restricted-filters .allowed.active{color:#3f70d2;background:#eaf1ff;border-color:#b9cdf4;font-weight:700}.restricted-filters .purple.active{color:#8751dd;background:#f6efff;border-color:#d8befa}.restricted-filters .skill-tag.active{color:#35725a;background:#edf8f2;border-color:#bfe3d0}.restricted-filters span{font-weight:700;color:#718098}
@@ -123,7 +123,7 @@
     <div class="app-logo">大促目标助手</div><small>AI Agent Workspace</small>
     <nav class="app-nav tree-nav" aria-label="工作区导航">
       <section class="tree-section open" data-tree-section="target">
-        <button class="tree-root on" data-workspace="target" type="button"><i>⌁</i><span>目标测算</span><em>核心流程</em></button>
+        <button class="tree-root on" data-workspace="target" type="button"><i>⌁</i><span>目标测算</span></button>
         <div class="tree-children">
           <button class="tree-parent tree-link" data-nav-page="info" data-nav-anchor="info" type="button"><span>大促信息</span></button>
           <div class="tree-group open" data-tree-group="market">
@@ -280,8 +280,10 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     {id:'mom-baby-review-2025-618',type:'飞书文档',icon:'▱',title:'2025年母婴行业618大促发货目标达成情况数据复盘',owner:'行业运营',updatedAt:'2026-07-20 10:09',refs:'0 处引用',url:'https://bytedance.larkoffice.com/docx/demo-mom-baby-review-2025-618'}
   ];
   const DEMO_MARKET_SKILLS=[
-    {id:'market-target',name:'支付GMV（OKR法）目标预估',desc:'承接 OKR 要求与历史可比日，生成全周期 / 阶段目标与同比校验。'},
-    {id:'daily-split',name:'分日目标拆解',desc:'按阶段、Big Day 与历史可比期拆解每日支付 GMV 目标。'}
+    {id:'history-reference-selection',name:'历史可参照日选取1.0（含大促周期/农历/周中周末/特殊周期）',desc:'根据目标促周期与特殊日期规则，输出历史参考日映射。'},
+    {id:'market-target',name:'支付GMV目标（OKR法）',desc:'承接 OKR 要求与历史可比日，生成全周期 / 阶段目标与同比校验。'},
+    {id:'payment-daily-split',name:'支付GMV分日拆解',desc:'按阶段、Big Day 与历史可比期拆解每日支付 GMV 目标。'},
+    {id:'shipment-daily-split',name:'发货GMV分日拆解',desc:'基于支付 GMV 分日目标和发货率口径，生成每日发货 GMV 目标。'}
   ];
   const DEMO_INDUSTRY_SKILLS=[
     {id:'industry-gmv-target-forecast',name:'industry-gmv-target-forecast',desc:'承接大盘目标，生成一级/二级赛道全周期与阶段目标。'},
@@ -2067,7 +2069,6 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .market-original-output table{width:100%;min-width:1120px;border-collapse:collapse}
 	      .okr-combined-module{border-top:0!important;padding-top:0!important;margin-bottom:28px!important}
 	      .okr-merged-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:0 0 10px}
-		      .okr-merged-head .result-csv-btn{margin-bottom:8px}
 	      .okr-merged-head h3{margin:0;color:#294a78;font-size:16px;font-weight:900}
 	      .okr-skill-ref{color:#8191a8;font-size:12px;font-weight:900;text-align:right;white-space:nowrap}
 	      .okr-driver-panel{border:1px solid #dce8f8;background:linear-gradient(180deg,#f8fbff,#eef5ff);border-radius:14px;padding:13px 14px;margin:0 0 12px;display:grid;gap:11px}
@@ -2084,6 +2085,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      .okr-driver-field input:focus{border-color:#7ca4ff;box-shadow:0 0 0 3px rgba(77,120,244,.12);background:#fff}
 	      .okr-driver-field small{color:#8a99b1;font-size:11px;line-height:1.45}
 	      .okr-driver-note{border:1px solid #d8e7ff;background:#f2f7ff;border-radius:10px;padding:9px 10px;color:#496a9b;font-size:11px;font-weight:800;line-height:1.55}
+		      .okr-table-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 8px}
+		      .okr-table-toolbar span{color:#71839d;font-size:12px;font-weight:900}
+		      .okr-table-toolbar .result-csv-btn{height:34px}
 	      .okr-merged-table-wrap{border:1px solid #d8dee8;background:#fff;border-radius:5px;overflow:auto}
 	      .market-original-output .okr-merged-table{min-width:1580px!important;width:100%;border-collapse:collapse!important;font-size:11px;color:#263a5b}
 	      .okr-merged-table th,.okr-merged-table td{height:30px;border:1px solid #e1e6ef!important;padding:6px 8px!important;text-align:right!important;white-space:nowrap;background:#fff!important}
@@ -2189,20 +2193,14 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     };
     market.innerHTML=`
       <div class="market-progressive">
-        <section class="market-hero">
-          <div>
-            <h2>大盘测算</h2>
-	            <p>先确认历史参考与可比日，再自动获取标签为「大盘测算」的全部 Skill，产出大盘全周期、阶段和分日目标。</p>
-          </div>
-            <div class="market-run-state"><span>生成状态<b data-market-status hidden>待测算</b></span><button class="market-regenerate-btn" data-run-market-calc>待测算</button></div>
-        </section>
+	        <div class="market-run-controls" hidden><b data-market-status hidden>待测算</b><button class="market-regenerate-btn" data-run-market-calc type="button">待测算</button></div>
 	        <section class="market-history-gate" data-market-history-gate>
 	          <div class="history-card-head">
 	            <div class="history-card-title">
 		              <div><h3>历史参考与可比日</h3><small>开始大盘测算前的人工交互项。确认后，mapping 将作为大盘测算输入。根据设定的活动促周期，选择并匹配更精确的分日参照日映射。</small></div>
 	            </div>
 	            <div class="history-card-actions">
-	              <span class="skill-auto-badge">已自动获取 2 个匹配 Skill</span>
+		              <span class="skill-auto-badge">已自动获取 2 个匹配 Skill</span>
 	              <div class="skill-picker">
 	                <div class="skill-source-label">Skill 来源</div>
 	                <div class="skill-select-shell">
@@ -2241,7 +2239,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         </section>
           <section class="market-skill-panel" data-market-skills>
             <div class="skill-panel-head"><h3>Skill 执行进度</h3><span class="skill-pill">已识别标签：大盘测算</span></div>
-            <p class="skill-call-summary" data-skill-call-summary>已自动获取 2 个匹配 Skill，等待发起测算</p>
+	            <p class="skill-call-summary" data-skill-call-summary>已自动获取 4 个匹配 Skill，等待发起测算</p>
           <div class="skill-grid-auto">
             ${renderSkillCallCards(DEMO_MARKET_SKILLS,'market-skill')}
           </div>
@@ -2297,7 +2295,6 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      module.innerHTML=`
 	        <div class="okr-merged-head">
 		          <div>
-		            <button class="result-csv-btn" data-download-market-okr-csv type="button">⇩ 下载 CSV</button>
 		            <h3>支付GMV目标（OKR法）</h3>
 		          </div>
 		          <span class="okr-skill-ref">引用 Skill：支付GMV（OKR法）目标预估</span>
@@ -2334,6 +2331,10 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	          </div>
 	          <div class="okr-driver-note" data-okr-driver-note>系统已根据参考区自然水位同比给出初始建议；你可继续调整后重新生成目标。</div>
 	        </section>
+		        <div class="okr-table-toolbar">
+		          <span>目标结果明细表</span>
+		          <button class="result-csv-btn" data-download-market-okr-csv type="button">⇩ 下载 CSV</button>
+		        </div>
 	        <div class="okr-merged-table-wrap">
 	          <table class="okr-merged-table">
 	            <thead>
@@ -2548,7 +2549,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	        runBtn.textContent=historyReady?'发起测算':'待确认可比日';
       skillPanel.classList.remove('on');
       resetSkillCallCards(skillPanel);
-        revealDiscoveredSkillCards(skillPanel,'已自动获取 2 个匹配 Skill，等待发起测算');
+	        revealDiscoveredSkillCards(skillPanel,'已自动获取 4 个匹配 Skill，等待发起测算');
+	      markMarketHistorySkillReady();
       generated.classList.remove('on');
       placeholder.style.display='';
 	      placeholder.textContent=historyReady?'历史可比日已确认。点击「发起测算」后，系统会自动读取知识库并调用 Skill 生成测算结果。':'请先确认上方历史参考与可比日；确认后系统会自动读取知识库并调用 Skill 生成测算结果。';
@@ -2563,6 +2565,10 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      updateMarketHistoryGate();
     };
 	    const steps=[...progressRail.querySelectorAll('[data-gen-step]')];
+	    const markMarketHistorySkillReady=()=>{
+	      if(!DEMO_SESSION_STATE.historyMappingReady)return;
+	      updateSkillCallCard(skillPanel,'history-reference-selection',{fetchText:'已获取历史可比日规则',fetchState:'success',invokeText:'调用成功',invokeState:'success'});
+	    };
 	    const setMarketStep=(index,label)=>{
 	      steps.forEach((step,i)=>{
 	        step.classList.toggle('active',i===index);
@@ -2641,7 +2647,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       status.textContent='拉取知识库与 Skill';
       skillPanel.classList.add('on');
       resetSkillCallCards(skillPanel);
-	        revealDiscoveredSkillCards(skillPanel,'已自动获取 2 个匹配 Skill，将按资管确认逐步执行');
+		        revealDiscoveredSkillCards(skillPanel,'已自动获取 4 个匹配 Skill，将按资管确认逐步执行');
+	      markMarketHistorySkillReady();
       placeholder.style.display='none';
       generated.classList.add('on');
 		      const cycleConfirmButton=market.querySelector('[data-confirm-market-stage="cycle"]');
@@ -2662,7 +2669,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         steps[1].querySelector('span').textContent='等待目标生成';
         steps[2].querySelector('span').textContent='等待拆解完成';
 	      market.querySelectorAll('[data-block]').forEach(block=>block.classList.remove('show'));
-		      runMarketSkillStep({id:'market-target',order:'01',title:'支付GMV（OKR法）目标预估',stepIndex:0,blockName:'cycle',stageCard:'cycle',runningLabel:'生成全周期 / 阶段目标',doneLabel:'全周期 / 阶段目标待确认',readyStage:'market_target_ready',afterDone:()=>{
+			      runMarketSkillStep({id:'market-target',order:'02',title:'支付GMV目标（OKR法）',stepIndex:0,blockName:'cycle',stageCard:'cycle',runningLabel:'生成全周期 / 阶段目标',doneLabel:'全周期 / 阶段目标待确认',readyStage:'market_target_ready',afterDone:()=>{
 		        if(cycleConfirmButton){
 		          cycleConfirmButton.disabled=false;
 	          cycleConfirmButton.textContent='确认并进入分日预测';
@@ -2682,15 +2689,17 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	          dailyButton.textContent='确认分日预测结果';
 		        }
 		        market.dataset.marketStage='daily_running';
-			        runMarketSkillStep({id:'daily-split',order:'02',title:'分日目标拆解',stepIndex:1,blockName:'daily',stageCard:'daily',runningLabel:'生成分日目标',doneLabel:'分日目标待确认',readyStage:'daily_ready',afterDone:()=>{
-		          if(dailyButton){
-		            dailyButton.disabled=false;
-			            dailyButton.textContent='确认分日预测结果';
-		          }
-		          doc.defaultView.parent?.syncTargetNavFromReport?.('market','marketDaily');
-			          doc.defaultView.setTimeout(()=>doc.defaultView.parent?.syncTargetNavFromReport?.('market','marketDaily'),160);
-		          market.querySelector('[data-block="daily"]')?.scrollIntoView({behavior:'smooth',block:'start'});
-		        }});
+				        runMarketSkillStep({id:'payment-daily-split',order:'03',title:'支付GMV分日拆解',stepIndex:1,stageCard:'daily',runningLabel:'拆解分日支付 GMV',doneLabel:'支付 GMV 分日拆解完成',afterDone:()=>{
+				          runMarketSkillStep({id:'shipment-daily-split',order:'04',title:'发货GMV分日拆解',stepIndex:1,blockName:'daily',stageCard:'daily',runningLabel:'拆解分日发货 GMV',doneLabel:'分日目标待确认',readyStage:'daily_ready',afterDone:()=>{
+				            if(dailyButton){
+				              dailyButton.disabled=false;
+				              dailyButton.textContent='确认分日预测结果';
+				            }
+				            doc.defaultView.parent?.syncTargetNavFromReport?.('market','marketDaily');
+				            doc.defaultView.setTimeout(()=>doc.defaultView.parent?.syncTargetNavFromReport?.('market','marketDaily'),160);
+				            market.querySelector('[data-block="daily"]')?.scrollIntoView({behavior:'smooth',block:'start'});
+				          }});
+				        }});
 		        return;
 		      }
 		      doc.defaultView.tip?.('请等待当前 Skill 执行完成');
@@ -2910,6 +2919,13 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      .forecast-table-card,.forecast-check-card{border:1px solid #dfe8f6;background:#fff;border-radius:16px;padding:14px;overflow:hidden}
 	      .forecast-table-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:10px}
 	      .forecast-table-head p{margin:4px 0 0;color:#8190a8;font-size:12px;line-height:1.45}
+	      .forecast-sheet-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
+	      .forecast-sheet-tabs button{height:34px;border:1px solid #d6e2f2;background:#f8fbff;color:#5e7190;border-radius:10px;padding:0 12px;font-size:12px;font-weight:900;cursor:pointer}
+	      .forecast-sheet-tabs button.active{border-color:#4d78f4;background:#edf3ff;color:#2f63de;box-shadow:0 8px 18px rgba(77,120,244,.12)}
+	      .forecast-sheet-pane{display:none}
+	      .forecast-sheet-pane.active{display:block}
+	      .forecast-sheet-note{display:flex;align-items:center;gap:8px;margin:0 0 10px;color:#7d8da5;font-size:12px;font-weight:800;line-height:1.45}
+	      .forecast-sheet-note:before{content:"";width:7px;height:7px;border-radius:50%;background:#4d78f4;flex:0 0 7px}
 	      .forecast-table-wrap{overflow:auto;border:1px solid #d8e4f5;border-radius:12px}
 	      .forecast-target-table{width:100%;min-width:1500px;border-collapse:collapse;font-size:12px}
 	      .forecast-target-table th,.forecast-target-table td{border:1px solid #dfe8f5;padding:9px 10px;text-align:right;white-space:nowrap}
@@ -2923,6 +2939,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      .forecast-target-table input{width:86px;height:30px;border:1px solid #b9cef8;background:#fff;border-radius:8px;color:#245fd6;font-weight:900;text-align:right;padding:0 8px}
 	      .manual-flag{display:inline-flex;margin-left:6px;border-radius:999px;background:#fff4df;color:#a5670c;padding:2px 6px;font-size:10px;font-weight:900}
 	      .range-cell{color:#60718a}
+	      .sheet-muted{color:#8190a8}
+	      .method-diff.up{color:#d94747;font-weight:900}
+	      .method-diff.down{color:#17804d;font-weight:900}
 	      .check-high{color:#d94747;font-weight:900}
 	      .check-ok{color:#17804d;font-weight:900}
 	      .forecast-check-list{display:grid;gap:8px}
@@ -3126,22 +3145,68 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	            <section class="forecast-table-card">
 	              <div class="forecast-table-head">
 	                <div>
-	                  <h3>目标概览与三方法明细</h3>
-	                  <p>D 列「目标推荐值」支持手动修改；一级 / 汇总行会自动按子赛道加总，推荐区间与 J:O 校验会同步更新。</p>
+		                  <h3>行业目标测算表格</h3>
+		                  <p>默认展示「目标概览」；其余 4 个 sheet 折叠为子页面，点击页签即可查看对应方法明细。</p>
 	                </div>
-	                <span class="forecast-output-badge">D/E/F/G/H + J:O</span>
+		                <span class="forecast-output-badge">目标概览 + 4 Sheets</span>
 	              </div>
-	              <div class="forecast-table-wrap">
-	                <table class="forecast-target-table">
-	                  <thead>
-	                    <tr>
-	                      <th>一级</th><th>二级子赛道</th><th>D 目标推荐值</th><th>E 推荐区间</th><th>拉升法 C列</th><th>占比差法 C列</th><th>爆发法 C列</th>
-	                      <th>J 当前促 vs 活动同期</th><th>K 当前促 vs OKR</th><th>L 当前促 vs 基准期</th><th>M 活动同期</th><th>N 可比促1</th><th>O 可比促2</th>
-	                    </tr>
-	                  </thead>
-	                  <tbody data-target-rows></tbody>
-	                </table>
-	              </div>
+		              <div class="forecast-sheet-tabs" role="tablist" aria-label="行业目标测算表格子页面">
+		                <button class="active" data-forecast-sheet="overview" type="button">目标概览</button>
+		                <button data-forecast-sheet="lift" type="button">目标模板_拉升法</button>
+		                <button data-forecast-sheet="share" type="button">目标模板占比差法</button>
+		                <button data-forecast-sheet="burst" type="button">目标模板_爆发法</button>
+		                <button data-forecast-sheet="virtual" type="button">本地虚拟测算</button>
+		              </div>
+		              <div class="forecast-sheet-pane active" data-forecast-sheet-panel="overview">
+		                <p class="forecast-sheet-note">D 列「目标推荐值」支持手动修改；一级 / 汇总行会自动按子赛道加总，推荐区间与 J:O 校验会同步更新。</p>
+		                <div class="forecast-table-wrap">
+		                  <table class="forecast-target-table">
+		                    <thead>
+		                      <tr>
+		                        <th>一级</th><th>二级子赛道</th><th>D 目标推荐值</th><th>E 推荐区间</th><th>拉升法 C列</th><th>占比差法 C列</th><th>爆发法 C列</th>
+		                        <th>J 当前促 vs 活动同期</th><th>K 当前促 vs OKR</th><th>L 当前促 vs 基准期</th><th>M 活动同期</th><th>N 可比促1</th><th>O 可比促2</th>
+		                      </tr>
+		                    </thead>
+		                    <tbody data-target-rows></tbody>
+		                  </table>
+		                </div>
+		              </div>
+		              <div class="forecast-sheet-pane" data-forecast-sheet-panel="lift">
+		                <p class="forecast-sheet-note">拉升法 sheet：展示各赛道活动同期基准、拉升系数和拉升法目标，作为 D 列推荐值的来源之一。</p>
+		                <div class="forecast-table-wrap">
+		                  <table class="forecast-target-table forecast-method-table">
+		                    <thead><tr><th>一级</th><th>二级子赛道</th><th>活动同期</th><th>拉升系数</th><th>拉升法目标</th><th>D 推荐值</th><th>与推荐值差异</th><th>说明</th></tr></thead>
+		                    <tbody data-method-rows="lift"></tbody>
+		                  </table>
+		                </div>
+		              </div>
+		              <div class="forecast-sheet-pane" data-forecast-sheet-panel="share">
+		                <p class="forecast-sheet-note">占比差法 sheet：展示行业目标占比承接、可比促占比差和占比差法目标，便于校验父子赛道配平。</p>
+		                <div class="forecast-table-wrap">
+		                  <table class="forecast-target-table forecast-method-table">
+		                    <thead><tr><th>一级</th><th>二级子赛道</th><th>OKR 占比</th><th>可比促占比</th><th>占比差法目标</th><th>D 推荐值</th><th>与推荐值差异</th><th>说明</th></tr></thead>
+		                    <tbody data-method-rows="share"></tbody>
+		                  </table>
+		                </div>
+		              </div>
+		              <div class="forecast-sheet-pane" data-forecast-sheet-panel="burst">
+		                <p class="forecast-sheet-note">爆发法 sheet：展示基准期目标、爆发系数和爆发法目标，用于识别潜在高爆发赛道。</p>
+		                <div class="forecast-table-wrap">
+		                  <table class="forecast-target-table forecast-method-table">
+		                    <thead><tr><th>一级</th><th>二级子赛道</th><th>基准期</th><th>爆发系数</th><th>爆发法目标</th><th>D 推荐值</th><th>与推荐值差异</th><th>说明</th></tr></thead>
+		                    <tbody data-method-rows="burst"></tbody>
+		                  </table>
+		                </div>
+		              </div>
+		              <div class="forecast-sheet-pane" data-forecast-sheet-panel="virtual">
+		                <p class="forecast-sheet-note">本地虚拟测算 sheet：沉淀本地虚拟、自助中心等特殊赛道口径，默认折叠，点击后查看完整测算明细。</p>
+		                <div class="forecast-table-wrap">
+		                  <table class="forecast-target-table forecast-method-table">
+		                    <thead><tr><th>测算对象</th><th>口径类型</th><th>目标推荐值</th><th>拉升法目标</th><th>占比差法目标</th><th>爆发法目标</th><th>推荐区间</th><th>说明</th></tr></thead>
+		                    <tbody data-method-rows="virtual"></tbody>
+		                  </table>
+		                </div>
+		              </div>
 	            </section>
 	            <section class="forecast-check-card">
 	              <h3>校验模块重点偏差</h3>
@@ -3219,8 +3284,37 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	          const values=[row.currentLift,row.currentShare,row.currentBurst,row.currentRec].filter(value=>Number.isFinite(value));
 	          return fmt(Math.min(...values))+'~'+fmt(Math.max(...values));
 	        };
-	        const checkValues=row=>(row.baseline||[0,0,0,0,0,0]).map(base=>(row.currentRec||0)-base);
-	        const checkClass=value=>Math.abs(value)>=5?'check-high':'check-ok';
+		        const checkValues=row=>(row.baseline||[0,0,0,0,0,0]).map(base=>(row.currentRec||0)-base);
+		        const checkClass=value=>Math.abs(value)>=5?'check-high':'check-ok';
+		        const rowName=row=>{
+		          const parts=[row.level,row.name].filter(Boolean);
+		          return parts[0]===parts[1]?parts[0]:parts.join(' / ');
+		        };
+		        const diffCell=(methodValue,row)=>{
+		          const diff=Number(methodValue||0)-Number(row.currentRec||0);
+		          const cls=diff>=0?'up':'down';
+		          return '<span class="method-diff '+cls+'">'+(diff>=0?'+':'')+fmt(diff)+'</span>';
+		        };
+		        const renderMethodRows=(kind)=>{
+		          const tbody=sourceNode.querySelector('[data-method-rows="'+kind+'"]');
+		          if(!tbody)return;
+		          const visibleRows=order.map(id=>byId[id]).filter(row=>row.kind!=='fixed');
+		          if(kind==='virtual'){
+		            const virtualRows=['self','virtual'].map(id=>byId[id]);
+		            tbody.innerHTML=virtualRows.map(row=>'<tr data-sheet-row-id="'+row.id+'"><td>'+rowName(row)+'</td><td>'+(row.id==='virtual'?'本地虚拟':'特殊承接')+'</td><td><strong>'+fmt(row.currentRec)+'</strong></td><td>'+fmt(row.currentLift)+'</td><td>'+fmt(row.currentShare)+'</td><td>'+fmt(row.currentBurst)+'</td><td class="range-cell">'+rangeFor(row)+'</td><td class="sheet-muted">'+(row.id==='virtual'?'本地虚拟目标独立测算，进入行业汇总勾稽。':'自助中心作为特殊赛道独立承接，参与行业加总。')+'</td></tr>').join('');
+		            return;
+		          }
+		          const configs={
+		            lift:{value:'currentLift',baseIndex:3,ratio:row=>(row.currentLift/(row.baseline?.[0]||row.currentLift||1)),note:'活动同期拉升后得到方法目标'},
+		            share:{value:'currentShare',baseIndex:4,ratio:row=>(row.currentShare/(row.currentRec||1)),note:'承接 OKR 占比与可比促占比差'},
+		            burst:{value:'currentBurst',baseIndex:5,ratio:row=>(row.currentBurst/(row.baseline?.[2]||row.currentBurst||1)),note:'基于基准期叠加爆发系数'}
+		          }[kind];
+		          tbody.innerHTML=visibleRows.map(row=>{
+		            const methodValue=row[configs.value]||0;
+		            const base=Math.max(0,Number(row.baseline?.[configs.baseIndex]??row.currentRec??0));
+		            return '<tr data-sheet-row-id="'+row.id+'"><td>'+row.level+'</td><td>'+row.name+'</td><td>'+fmt(base)+'</td><td>'+fmt(configs.ratio(row))+'x</td><td><strong>'+fmt(methodValue)+'</strong></td><td>'+fmt(row.currentRec)+'</td><td>'+diffCell(methodValue,row)+'</td><td class="sheet-muted">'+configs.note+'</td></tr>';
+		          }).join('');
+		        };
 	        const render=()=>{
 	          computeRow(byId.industry);
 	          computeRow(byId.market);
@@ -3256,7 +3350,15 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	          sourceNode.querySelector('[data-check-list]').innerHTML=risky.length
 	            ? risky.map(item=>'<div class="check-line"><b>'+[item.row.level,item.row.name].filter(Boolean).join(' / ')+'</b>：'+['J 当前促 vs 活动同期','K 当前促 vs OKR','L 当前促 vs 基准期','M 活动同期','N 可比促1','O 可比促2'][item.index]+' 偏差 <span class="'+checkClass(item.value)+'">'+fmt(item.value)+'pp</span>，建议业务复核。</div>').join('')
 	            : '<div class="check-line"><b>无高偏差赛道</b>：J:O 校验偏差均在 ±5pp 内。</div>';
+		          ['lift','share','burst','virtual'].forEach(renderMethodRows);
 	        };
+		        sourceNode.querySelectorAll('[data-forecast-sheet]').forEach(button=>{
+		          button.addEventListener('click',()=>{
+		            const key=button.dataset.forecastSheet;
+		            sourceNode.querySelectorAll('[data-forecast-sheet]').forEach(item=>item.classList.toggle('active',item===button));
+		            sourceNode.querySelectorAll('[data-forecast-sheet-panel]').forEach(panel=>panel.classList.toggle('active',panel.dataset.forecastSheetPanel===key));
+		          });
+		        });
 	        sourceNode.querySelector('[data-target-rows]').addEventListener('change',event=>{
 	          const input=event.target.closest('[data-target-rec]');
 	          if(!input)return;
@@ -3554,13 +3656,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      };
     industry.innerHTML=`
       <div class="industry-progressive">
-        <section class="industry-hero">
-          <div>
-            <h2>行业测算</h2>
-            <p>填写并确认行业目标测算输入项后，系统自动获取标签为「行业测算」的全部 Skill，并生成全周期、阶段和分日目标。</p>
-          </div>
-            <div class="industry-run-state"><span>生成状态<b data-industry-status hidden>待测算</b></span><button class="industry-regenerate-btn" data-run-industry-calc>待测算</button></div>
-        </section>
+	        <div class="industry-run-controls" hidden><b data-industry-status hidden>待测算</b><button class="industry-regenerate-btn" data-run-industry-calc type="button">待测算</button></div>
           <section class="industry-input-card" data-industry-input-form>
             <div class="industry-input-head">
               <div>
@@ -3632,13 +3728,21 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
                 </div>
                 <div class="industry-field">
                   <label>虚拟可比期1</label>
-                  <input type="date" aria-label="虚拟可比期1日期">
-                  <p class="industry-field-hint">选择具体年月日。</p>
+	                  <div class="industry-date-range">
+	                    <input type="date" value="2025-05-15" aria-label="虚拟可比期1开始日期">
+	                    <i>至</i>
+	                    <input type="date" value="2025-06-18" aria-label="虚拟可比期1结束日期">
+	                  </div>
+	                  <p class="industry-field-hint">示例 2025/5 自动平移为 2025/5/15 - 2025/6/18，可手动覆盖。</p>
                 </div>
                 <div class="industry-field">
                   <label>虚拟可比期2</label>
-                  <input type="date" aria-label="虚拟可比期2日期">
-                  <p class="industry-field-hint">选择具体年月日。</p>
+	                  <div class="industry-date-range">
+	                    <input type="date" value="2026-03-15" aria-label="虚拟可比期2开始日期">
+	                    <i>至</i>
+	                    <input type="date" value="2026-04-18" aria-label="虚拟可比期2结束日期">
+	                  </div>
+	                  <p class="industry-field-hint">示例 2026/3 自动平移为 2026/3/15 - 2026/4/18，可手动覆盖。</p>
                 </div>
               </div>
             </section>
@@ -3883,7 +3987,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         updateIndustryInputState();
       skillPanel.classList.remove('on');
       resetSkillCallCards(skillPanel);
-      revealDiscoveredSkillCards(skillPanel,'已自动获取 2 个匹配 Skill，等待发起测算');
+		        revealDiscoveredSkillCards(skillPanel,'已自动获取 2 个匹配 Skill，等待发起测算');
       generated.classList.remove('on');
 	        if(knowledgePanel)knowledgePanel.hidden=true;
       placeholder.style.display='';
@@ -4632,11 +4736,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	  addEventListener('hashchange',()=>openPage(location.hash.slice(1)||'natural',false));
   const initialModule=location.hash.slice(1);
 	  const normalizedInitial=routes[initialModule]?initialModule:'natural';
-  openPage(normalizedInitial,false);
-	  if(['natural','info','market','industry'].includes(normalizedInitial)){
-    switchWorkspace('target');
-    openPage(normalizedInitial,false);
-  }
+	  switchWorkspace('target');
+	  openPage(normalizedInitial,false);
 </script>
 </body>
 </html>
