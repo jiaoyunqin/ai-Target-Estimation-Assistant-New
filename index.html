@@ -2783,7 +2783,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         .industry-input-knowledge-head b{display:block;color:#213b62;margin-bottom:4px}
         .industry-input-knowledge-head small{display:block;color:#8190a8;line-height:1.45}
         .industry-add-knowledge{height:34px;border:1px solid #d4e0f1;background:#fff;color:#4d78f4;border-radius:10px;padding:0 12px;font-weight:900;cursor:pointer;white-space:nowrap}
-        .industry-input-knowledge-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+        .industry-input-knowledge-grid{display:grid;grid-template-columns:1fr;gap:12px}
         .industry-input-knowledge-card{border:1px solid #dce8f8;background:#fbfdff;border-radius:18px;padding:16px;display:grid;gap:12px}
         .industry-input-knowledge-card h3{margin:0;color:#213b62;font-size:15px}
         .industry-input-knowledge-card .industry-input-knowledge-head{align-items:flex-start}
@@ -3059,8 +3059,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       const hasMarketTarget=DEMO_SESSION_STATE.marketCompleted&&DEMO_SESSION_STATE.marketTargetValue;
       const carriedMarketTarget=hasMarketTarget?DEMO_SESSION_STATE.marketTargetValue:'';
       const INDUSTRY_INPUT_KNOWLEDGE_MODULES=[
-        {key:'okr',resourceId:'okr-2026-promo-new',title:'2026年资管大促目标OKR要求 (新)',desc:'飞书表格格式。用于读取行业目标约束、OKR 口径与目标上限下限。',empty:'请添加 2026年资管大促目标OKR要求 (新) 飞书表格。'},
-        {key:'comparable',resourceId:'comparable-promo-maintenance',title:'可比促信息维护',desc:'飞书文档格式。用于读取活动同期、可比促、基准期和虚拟可比期说明。',empty:'请添加可比促信息维护飞书文档。'}
+        {key:'okr',resourceId:'okr-2026-promo-new',title:'OKR要求',desc:'飞书表格格式。用于读取行业目标约束、OKR 口径与目标上限下限。',empty:'请添加 2026年资管大促目标OKR要求 (新) 飞书表格。'},
+        {key:'comparable',resourceId:'comparable-promo-maintenance',title:'可比促信息',desc:'飞书文档格式。用于读取活动同期、可比促、基准期和虚拟可比期说明。',empty:'请添加可比促信息维护飞书文档。'}
       ];
       const getIndustryInputKnowledgeResources=module=>DEMO_SESSION_STATE.industryInputKnowledgeIds.map(getDemoKnowledgeResource).filter(resource=>resource&&(!module||resource.id===module.resourceId));
       const renderIndustryInputKnowledgeItems=module=>{
@@ -3707,7 +3707,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
             </section>
             <section class="industry-input-section">
               <h4>基准与虚拟可比期</h4>
-              <div class="industry-input-grid four">
+	              <div class="industry-input-grid two">
                 <div class="industry-field">
                   <label>基准期</label>
                   <div class="industry-date-range">
@@ -3726,6 +3726,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
                   </div>
                   <p class="industry-field-hint">默认取基准期日期各自 -1 年，可用日期选择覆盖。</p>
                 </div>
+	              </div>
+	              <div class="industry-input-grid two">
                 <div class="industry-field">
                   <label>虚拟可比期1</label>
 	                  <div class="industry-date-range">
