@@ -99,7 +99,7 @@
 .tree-leaf:before{content:"";width:6px;height:6px;border-radius:50%;background:#cbd8eb;flex:0 0 6px}
 .tree-leaf.on{background:#fff;color:#2f63de;box-shadow:inset 0 0 0 1px #dce8ff}
 .tree-leaf.on:before{background:#3f70f4}
-.tree-leaf.locked,.tree-parent.locked{opacity:.48}
+.tree-leaf.locked,.tree-parent.locked{opacity:.48;cursor:not-allowed}
 .tree-leaf.locked:after,.tree-parent.locked:after{content:"待解锁";margin-left:auto;color:#a4b0c2;font-size:10px;font-weight:900}
 .tree-parent:hover,.tree-leaf:hover,.tree-root:hover{background:#f2f6ff;color:#315fca}
 .app-user{position:absolute;left:16px;right:16px;bottom:20px;margin-top:0;background:linear-gradient(180deg,rgba(247,251,255,.78),#f7fbff 42%,#f7fbff);z-index:2}
@@ -467,6 +467,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     infoReady:false,
     marketCompleted:false,
     marketTargetValue:'',
+	    marketDailyUnlocked:false,
+	    industryDailyUnlocked:false,
     autoRunMarketFromInfo:false,
     autoRunIndustryFromInfo:false
   };
@@ -1165,12 +1167,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       </section>
       <section class="card schedule-doc-card" data-doc-module="schedule" data-completion-anchor="schedule">
         <div class="info-head">
-              <div><h2><i class="num">2</i>阶段节奏</h2><small>支持添加文档解析，也可直接在下方手动填入或修改。</small></div>
-          <div class="schedule-doc-actions">
-            <button class="new-doc-btn" data-open-knowledge-picker="schedule">添加文档</button>
-          </div>
+		              <div><h2><i class="num">2</i>阶段节奏</h2></div>
         </div>
-        <div class="doc-source-list schedule-source-list" data-doc-source-list="schedule"></div>
         <div class="doc-custom-area schedule-manual-area">
           <div class="doc-custom-head"><b>阶段划分</b><button class="ghost-btn" data-add-stage>＋ 添加阶段</button></div>
           <div class="stage-list">
@@ -1194,7 +1192,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       </section>
       <section class="card doc-parse-card" data-doc-module="budget" data-completion-anchor="budget">
         <div class="info-head">
-          <div><h2><i class="num">3</i>预算规划</h2><small>通过飞书文档或 Knowledge 资源解析预算口径、阶段预算与分日规划。</small></div>
+	          <div><h2><i class="num">3</i>预算规划</h2></div>
             <button class="new-doc-btn" data-open-knowledge-picker="budget">添加</button>
         </div>
         <div class="doc-source-list" data-doc-source-list="budget">
@@ -1203,7 +1201,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       </section>
       <section class="card doc-parse-card" data-doc-module="rival" data-completion-anchor="rival">
         <div class="info-head">
-                <div><h2><i class="num">4</i>竞对信息（选填）</h2><small>通过飞书文档或本地文件解析竞对活动，资管可自定义补充。</small></div>
+	                <div><h2><i class="num">4</i>竞对信息（选填）</h2></div>
             <button class="new-doc-btn" data-open-knowledge-picker="rival">添加</button>
         </div>
         <div class="doc-source-list" data-doc-source-list="rival">
@@ -1323,7 +1321,6 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         }
 	        doc.defaultView.parent?.syncTargetWorkflowState?.();
 	      };
-	      confirmInfoReady();
 	      confirmHistoryBtn?.addEventListener('click',()=>{
 	        confirmInfoReady();
 		        doc.defaultView.toast?.('大促信息已确认，进入支付GMV目标测算');
@@ -2074,12 +2071,17 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       .market-original-output>.market-view>section,.market-original-output .chart-card,.market-original-output .blue-sheet,.market-original-output .sheet,.market-original-output .table-wrap,.market-original-output .forecast-table,.market-original-output .okr-table{width:100%;max-width:100%}
       .market-original-output table{width:100%;min-width:1120px;border-collapse:collapse}
 	      .okr-combined-module{border-top:0!important;padding-top:0!important;margin-bottom:28px!important}
-	      .okr-merged-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:0 0 10px}
-	      .okr-merged-head h3{margin:0;color:#294a78;font-size:16px;font-weight:900}
-	      .okr-skill-ref{color:#8191a8;font-size:12px;font-weight:900;text-align:right;white-space:nowrap}
-		      .okr-source-row{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-top:10px}
-		      .okr-source-row .skill-picker{width:min(42vw,420px);min-width:310px}
-		      .okr-source-note{width:100%;margin:2px 0 0;color:#7486a2;font-size:11px;font-weight:800;line-height:1.45}
+		      .okr-merged-head{display:grid;gap:16px;margin:0 0 14px;padding:4px 8px 14px;border-bottom:1px solid #e6edf8}
+		      .okr-titlebar h3{margin:0;color:#294a78;font-size:18px;font-weight:900;letter-spacing:-.01em}
+		      .okr-source-row{display:grid;grid-template-columns:minmax(160px,.72fr) auto minmax(330px,1.4fr) minmax(220px,.78fr);gap:18px;align-items:center}
+		      .okr-source-title{color:#8390a6;font-size:18px;font-weight:900;white-space:nowrap}
+		      .okr-source-row .skill-auto-badge{height:42px;border-color:#dbe7ff;background:#f8fbff;color:#3768df;border-radius:12px;padding:0 16px;box-shadow:0 8px 18px rgba(61,112,204,.06)}
+		      .okr-source-row .skill-picker{width:100%;min-width:0}
+		      .okr-source-row .skill-source-label{margin:0 0 6px 2px;color:#8190a8;font-size:11px;font-weight:900}
+		      .okr-source-row .skill-select-shell{border-color:#f0a84c;border-radius:12px;box-shadow:0 8px 20px rgba(240,168,76,.08)}
+		      .okr-source-row .skill-select{height:42px;font-size:12px;color:#61728b}
+		      .okr-source-note{margin:7px 0 0;color:#7486a2;font-size:11px;font-weight:900;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+		      .okr-skill-ref{height:42px;border:1px solid #e0e4ea;background:linear-gradient(180deg,#fafbfc,#f4f6f9);border-radius:999px;color:#8a95a6;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 22px;text-align:center;white-space:nowrap}
 	      .okr-driver-panel{border:1px solid #dce8f8;background:linear-gradient(180deg,#f8fbff,#eef5ff);border-radius:14px;padding:13px 14px;margin:0 0 12px;display:grid;gap:11px}
 	      .okr-driver-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 	      .okr-driver-head h4{margin:0;color:#263a5b;font-size:14px;font-weight:900}
@@ -2111,7 +2113,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      .okr-merged-table .editable-cell{background:#edf4ff!important;color:#2867d8!important;font-weight:900!important;box-shadow:inset 0 0 0 1px #c9dcff}
 	      .okr-merged-table .muted-cell{color:#9aa6b8!important}
 	      .okr-merged-table .ref-cell{background:#fbfdfb!important;color:#536579!important}
-	      @media(max-width:900px){.okr-driver-head{display:block}.okr-driver-flow{margin-top:10px}.okr-driver-grid{grid-template-columns:1fr}}
+		      @media(max-width:1100px){.okr-source-row{grid-template-columns:1fr 1fr}.okr-skill-ref{justify-content:flex-start}.okr-source-title,.okr-skill-ref{grid-column:1/-1}.okr-source-note{white-space:normal}}
+		      @media(max-width:900px){.okr-driver-head{display:block}.okr-driver-flow{margin-top:10px}.okr-driver-grid{grid-template-columns:1fr}.okr-source-row{grid-template-columns:1fr}.okr-source-title{font-size:16px}}
       .market-original-output [data-skill-locked]{opacity:1!important;filter:none!important;pointer-events:auto!important}
       .market-original-output .skill-locked-cover{display:none!important}
       .market-original-output .skill-gate{align-items:flex-end}
@@ -2264,10 +2267,12 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      const module=doc.createElement('section');
 	      module.className='static-module wide okr-combined-module';
 	      module.innerHTML=`
-	        <div class="okr-merged-head">
-		          <div>
+		        <div class="okr-merged-head">
+			          <div class="okr-titlebar">
 		            <h3>支付GMV目标（OKR法）</h3>
-		            <div class="okr-source-row">
+			          </div>
+			          <div class="okr-source-row">
+		              <div class="okr-source-title">历史参照与可比日选取</div>
 		              <span class="skill-auto-badge">已自动获取 2 个匹配 Skill</span>
 		              <div class="skill-picker">
 		                <div class="skill-source-label">Skill 来源</div>
@@ -2277,11 +2282,10 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 		                    <option value="v2">target-period-selection-logic-2-0｜对照期选取2.0（含补贴信息/特殊日期）</option>
 		                  </select>
 		                </div>
+		                <p class="okr-source-note" data-okr-source-note></p>
 		              </div>
-		              <p class="okr-source-note" data-okr-source-note></p>
-		            </div>
-		          </div>
-		          <span class="okr-skill-ref">引用 Skill：支付GMV（OKR法）目标预估</span>
+			            <span class="okr-skill-ref">引用 Skill：支付GMV目标（OKR法）</span>
+			          </div>
 	        </div>
 	        <section class="okr-driver-panel" data-okr-driver-panel>
 	          <div class="okr-driver-head">
@@ -2447,6 +2451,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       market.dataset.runStarted='false';
 	      market.dataset.marketStage='idle';
 	      market.dataset.skillRunId='';
+		      DEMO_SESSION_STATE.marketDailyUnlocked=false;
 		      DEMO_SESSION_STATE.historyMappingReady=true;
 		      status.textContent='待测算';
 		        runBtn.textContent='发起测算';
@@ -2466,6 +2471,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      });
 		      runBtn.disabled=false;
 	      updateMarketHistoryGate();
+		      doc.defaultView.parent?.syncTargetWorkflowState?.();
     };
 		    function startMarketOkrRun(delay=0){
 		      doc.defaultView.setTimeout(()=>{
@@ -2552,6 +2558,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 		        updateMarketHistoryGate();
 	      }
       market.dataset.runStarted='true';
+		      DEMO_SESSION_STATE.marketDailyUnlocked=false;
+		      doc.defaultView.parent?.syncTargetWorkflowState?.();
       runBtn.disabled=true;
 	      runBtn.textContent='等待确认';
       status.textContent='拉取知识库与 Skill';
@@ -2599,6 +2607,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	          dailyButton.textContent='确认分日预测结果';
 		        }
 		        market.dataset.marketStage='daily_running';
+				        DEMO_SESSION_STATE.marketDailyUnlocked=true;
+				        doc.defaultView.parent?.syncTargetWorkflowState?.();
 				        runMarketSkillStep({id:'payment-daily-split',order:'03',title:'支付GMV分日拆解',stepIndex:1,stageCard:'daily',runningLabel:'拆解分日支付 GMV',doneLabel:'支付 GMV 分日拆解完成',afterDone:()=>{
 				          runMarketSkillStep({id:'shipment-daily-split',order:'04',title:'发货GMV分日拆解',stepIndex:1,blockName:'daily',stageCard:'daily',runningLabel:'拆解分日发货 GMV',doneLabel:'分日目标待确认',readyStage:'daily_ready',afterDone:()=>{
 				            if(dailyButton){
@@ -3885,6 +3895,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     syncSidebarPanels(doc, 'industry');
     const resetIndustryGeneration=()=>{
       industry.dataset.runStarted='false';
+	      DEMO_SESSION_STATE.industryDailyUnlocked=false;
+	      doc.defaultView.parent?.syncTargetWorkflowState?.();
       status.textContent='待测算';
       if(runBtn){
         runBtn.textContent='待测算';
@@ -3916,6 +3928,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     };
       const revealIndustryDaily=()=>{
         if(!generated.classList.contains('on')||nextDailyBtn?.classList.contains('done'))return;
+	        DEMO_SESSION_STATE.industryDailyUnlocked=true;
+	        doc.defaultView.parent?.syncTargetWorkflowState?.();
         const steps=[...progressRail.querySelectorAll('[data-industry-gen-step]')];
         const dailyBlock=industry.querySelector('[data-industry-block="daily"]');
         const skillRunId=industry.dataset.skillRunId||String(Date.now());
@@ -3978,6 +3992,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           return;
         }
       industry.dataset.runStarted='true';
+	        DEMO_SESSION_STATE.industryDailyUnlocked=false;
+	        doc.defaultView.parent?.syncTargetWorkflowState?.();
       runBtn.disabled=true;
       runBtn.textContent='测算生成中...';
         if(inputButton){
@@ -4524,11 +4540,44 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       industryButton.disabled=!DEMO_SESSION_STATE.infoReady;
 	        industryButton.title=DEMO_SESSION_STATE.infoReady?'':'请先确认大促信息 1-4 项';
     }
-    document.querySelectorAll('[data-nav-page="market"],[data-nav-page="industry"]').forEach(button=>{
-      button.classList.toggle('locked',!DEMO_SESSION_STATE.infoReady);
-      button.title=DEMO_SESSION_STATE.infoReady?'':'请先确认大促信息';
+	    document.querySelectorAll('[data-nav-page]').forEach(button=>{
+	      const page=button.dataset.navPage;
+	      const anchor=button.dataset.navAnchor||'';
+	      const locked=!isTargetNodeUnlocked(page,anchor);
+	      button.classList.toggle('locked',locked);
+	      button.title=locked?getTargetNodeLockedReason(page,anchor):'';
     });
   }
+
+	  function isTargetNodeUnlocked(page,anchor=''){
+	    const normalized=normalizeAnchorForPage(page,anchor);
+	    if(page==='natural'||page==='info')return true;
+	    if(page==='market'){
+	      if(!DEMO_SESSION_STATE.infoReady)return false;
+	      return normalized!=='marketDaily'||DEMO_SESSION_STATE.marketDailyUnlocked;
+	    }
+	    if(page==='industry'){
+	      if(!DEMO_SESSION_STATE.infoReady)return false;
+	      return normalized!=='industryDaily'||DEMO_SESSION_STATE.industryDailyUnlocked;
+	    }
+	    return true;
+	  }
+
+	  function getTargetNodeLockedReason(page,anchor=''){
+	    const normalized=normalizeAnchorForPage(page,anchor);
+	    if((page==='market'||page==='industry')&&!DEMO_SESSION_STATE.infoReady)return '请先确认大促信息';
+	    if(normalized==='marketDaily')return '请先确认大盘目标测算结果';
+	    if(normalized==='industryDaily')return '请先确认行业目标测算结果';
+	    return '待解锁';
+	  }
+
+	  function getTargetNodeFallback(page,anchor=''){
+	    const normalized=normalizeAnchorForPage(page,anchor);
+	    if((page==='market'||page==='industry')&&!DEMO_SESSION_STATE.infoReady)return {page:'info',anchor:'info'};
+	    if(page==='market'&&normalized==='marketDaily')return {page:'market',anchor:'marketTarget'};
+	    if(page==='industry'&&normalized==='industryDaily')return {page:'industry',anchor:'industryTarget'};
+	    return {page,anchor:normalized};
+	  }
 
   function syncTreeActive(page=currentTargetPage,anchor=pendingTargetAnchor){
     document.querySelectorAll('.tree-leaf[data-nav-page],.tree-link[data-nav-page]').forEach(button=>{
@@ -4571,6 +4620,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       page='info';
       anchor='info';
     }
+	    anchor=normalizeAnchorForPage(page,anchor);
+	    if(page==='market'&&anchor==='marketDaily'&&!DEMO_SESSION_STATE.marketDailyUnlocked)anchor='marketTarget';
+	    if(page==='industry'&&anchor==='industryDaily'&&!DEMO_SESSION_STATE.industryDailyUnlocked)anchor='industryTarget';
     pendingTargetAnchor=normalizeAnchorForPage(page,anchor);
     const route=routes[page];
 	    currentTargetPage=page;
@@ -4625,7 +4677,15 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
   document.querySelectorAll('.tree-leaf[data-nav-page],.tree-link[data-nav-page]').forEach(button=>{
     button.addEventListener('click',event=>{
       event.stopPropagation();
-      openTargetNode(button.dataset.navPage,button.dataset.navAnchor||'');
+	      const page=button.dataset.navPage;
+	      const anchor=button.dataset.navAnchor||'';
+	      if(!isTargetNodeUnlocked(page,anchor)){
+	        event.preventDefault();
+	        const fallback=getTargetNodeFallback(page,anchor);
+	        openTargetNode(fallback.page,fallback.anchor);
+	        return;
+	      }
+	      openTargetNode(page,anchor);
     });
   });
   document.querySelectorAll('.tree-root[data-workspace]').forEach(button=>{
