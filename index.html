@@ -214,6 +214,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     {id:'competitor-2026-618',type:'飞书文档',icon:'▱',title:'2026年618大促618竞对情报',owner:'资管运营',updatedAt:'2026-07-18 14:05',refs:'0 处引用',url:'https://bytedance.larkoffice.com/docx/demo-competitor-2026-618'},
     {id:'onepage-2025-618',type:'飞书文档',icon:'▱',title:'2025年618大促测算OnePage',owner:'目标测算团队',updatedAt:'2026-07-18 15:42',refs:'0 处引用',url:'https://bytedance.larkoffice.com/docx/demo-onepage-2025-618'},
     {id:'okr-2026-promo-new',type:'飞书表格',icon:'▦',title:'2026年资管大促目标OKR要求 (新)',owner:'目标测算团队',updatedAt:'2026-07-19 09:18',refs:'0 处引用',url:'https://bytedance.larkoffice.com/sheets/demo-okr-2026-promo-new'},
+    {id:'comparable-promo-maintenance',type:'飞书文档',icon:'▱',title:'可比促信息维护',owner:'资管运营',updatedAt:'2026-07-19 10:36',refs:'0 处引用',url:'https://bytedance.larkoffice.com/docx/demo-comparable-promo-maintenance'},
     {id:'coupon-wave-2026-618',type:'飞书文档',icon:'▱',title:'2026年618大促券波次规划',owner:'营销策略组',updatedAt:'2026-07-19 13:44',refs:'0 处引用',url:'https://bytedance.larkoffice.com/docx/demo-coupon-wave-2026-618'},
     {id:'mom-baby-review-2025-618',type:'飞书文档',icon:'▱',title:'2025年母婴行业618大促发货目标达成情况数据复盘',owner:'行业运营',updatedAt:'2026-07-20 10:09',refs:'0 处引用',url:'https://bytedance.larkoffice.com/docx/demo-mom-baby-review-2025-618'}
   ];
@@ -393,6 +394,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     ],
     industrySource:null,
     industryMarketRun:null,
+    industryInputKnowledgeIds:['okr-2026-promo-new','comparable-promo-maintenance'],
+    industryInputKnowledgeParsed:{'okr-2026-promo-new':true,'comparable-promo-maintenance':true},
     industryKnowledgeIds:['industry-session-2026-618'],
     historyMappingReady:false,
 	    historyMappingSkill:'v1',
@@ -2703,6 +2706,15 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         .industry-input-knowledge-head b{display:block;color:#213b62;margin-bottom:4px}
         .industry-input-knowledge-head small{display:block;color:#8190a8;line-height:1.45}
         .industry-add-knowledge{height:34px;border:1px solid #d4e0f1;background:#fff;color:#4d78f4;border-radius:10px;padding:0 12px;font-weight:900;cursor:pointer;white-space:nowrap}
+        .industry-input-knowledge-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+        .industry-input-knowledge-card{border:1px solid #dce8f8;background:#fbfdff;border-radius:18px;padding:16px;display:grid;gap:12px}
+        .industry-input-knowledge-card h3{margin:0;color:#213b62;font-size:15px}
+        .industry-input-knowledge-card p{margin:0;color:#8190a8;font-size:12px;font-weight:800;line-height:1.55}
+        .industry-input-knowledge-card .industry-input-knowledge-head{align-items:flex-start}
+        .industry-input-knowledge-card .industry-knowledge-list{min-height:74px}
+        .industry-knowledge-parse{height:28px;border:1px solid #b8dbca;background:#effaf4;color:#17804d;border-radius:999px;padding:0 10px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap}
+        .industry-knowledge-parse.pending{border-color:#ffd8a8;background:#fff8eb;color:#b66b13}
+        .industry-knowledge-parse:disabled{cursor:default}
         .industry-knowledge-list{display:grid;gap:8px}
         .industry-knowledge-item{border:1px solid #dce8f8;background:#fff;border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
         .industry-knowledge-item i{width:30px;height:30px;border-radius:9px;background:#fff7f0;border:1px solid #ffe2cc;color:#f27a2f;display:grid;place-items:center;font-style:normal;font-weight:900}
@@ -2952,7 +2964,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         @media(max-width:900px){.industry-dispatch-config,.industry-dispatch-preview{grid-template-columns:1fr}.dispatch-option-list,.dispatch-user-list{grid-template-columns:1fr}.dispatch-column-list{grid-template-columns:repeat(2,1fr)}.industry-next-daily-actions{flex-wrap:wrap}.industry-dispatch-mask{padding:10px}.industry-dispatch-modal{width:calc(100vw - 20px);max-height:calc(100vh - 20px)}}
       .industry-placeholder{border:1px dashed #b9cff2;background:#f7fbff;border-radius:16px;padding:16px;color:#7486a2;text-align:center}
         @media(max-width:1100px){.industry-input-grid,.industry-skill-grid{grid-template-columns:1fr 1fr}}
-        @media(max-width:700px){.industry-hero,.industry-input-head,.industry-input-knowledge-head,.skill-panel-head,.result-head{display:block}.industry-input-grid,.industry-skill-grid{grid-template-columns:1fr}.industry-run-state{margin-top:12px}.industry-source-badge{display:inline-block;margin-top:10px}.industry-add-knowledge{margin-top:10px}}
+        @media(max-width:700px){.industry-hero,.industry-input-head,.industry-input-knowledge-head,.skill-panel-head,.result-head{display:block}.industry-input-grid,.industry-skill-grid,.industry-input-knowledge-grid{grid-template-columns:1fr}.industry-run-state{margin-top:12px}.industry-source-badge{display:inline-block;margin-top:10px}.industry-add-knowledge{margin-top:10px}}
     `;
     doc.head.appendChild(style);
     const originalCycle=industry.querySelector('#industryCycle')?.cloneNode(true);
@@ -2960,6 +2972,19 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         if(!DEMO_SESSION_STATE.industryKnowledgeIds.includes('industry-session-2026-618'))DEMO_SESSION_STATE.industryKnowledgeIds.unshift('industry-session-2026-618');
       const hasMarketTarget=DEMO_SESSION_STATE.marketCompleted&&DEMO_SESSION_STATE.marketTargetValue;
       const carriedMarketTarget=hasMarketTarget?DEMO_SESSION_STATE.marketTargetValue:'';
+      const INDUSTRY_INPUT_KNOWLEDGE_MODULES=[
+        {key:'okr',resourceId:'okr-2026-promo-new',title:'2026年资管大促目标OKR要求 (新)',desc:'飞书表格格式。用于读取行业目标约束、OKR 口径与目标上限下限。',empty:'请添加 2026年资管大促目标OKR要求 (新) 飞书表格。'},
+        {key:'comparable',resourceId:'comparable-promo-maintenance',title:'可比促信息维护',desc:'飞书文档格式。用于读取活动同期、可比促、基准期和虚拟可比期说明。',empty:'请添加可比促信息维护飞书文档。'}
+      ];
+      const getIndustryInputKnowledgeResources=module=>DEMO_SESSION_STATE.industryInputKnowledgeIds.map(getDemoKnowledgeResource).filter(resource=>resource&&(!module||resource.id===module.resourceId));
+      const renderIndustryInputKnowledgeItems=module=>{
+        const resources=getIndustryInputKnowledgeResources(module);
+        if(!resources.length)return '<div class="industry-knowledge-empty">'+escapeHtml(module.empty)+'</div>';
+        return resources.map(resource=>{
+          const parsed=Boolean(DEMO_SESSION_STATE.industryInputKnowledgeParsed[resource.id]);
+          return '<div class="industry-knowledge-item" data-industry-input-linked-resource="'+escapeHtml(resource.id)+'"><i>'+escapeHtml(resource.icon)+'</i><span><b>'+escapeHtml(resource.title)+'</b><small>'+escapeHtml(resource.type)+' · '+escapeHtml(resource.url)+'</small></span><div class="industry-knowledge-actions"><button class="industry-knowledge-parse '+(parsed?'':'pending')+'" data-parse-industry-input-knowledge="'+escapeHtml(resource.id)+'" type="button" '+(parsed?'disabled':'')+'>'+(parsed?'已解析':'解析')+'</button><button class="industry-knowledge-remove" data-remove-industry-input-knowledge="'+escapeHtml(resource.id)+'" type="button" aria-label="删除已关联资源">×</button></div></div>';
+        }).join('');
+      };
       const getIndustryKnowledgeResources=()=>DEMO_SESSION_STATE.industryKnowledgeIds.map(getDemoKnowledgeResource).filter(Boolean);
       const renderIndustryKnowledgeItems=()=>{
         const resources=getIndustryKnowledgeResources();
@@ -2968,11 +2993,14 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       };
       const renderIndustryKnowledgeOptions=(query='')=>{
         const selectedIds=String(industry.dataset.selectedKnowledgeIds||'').split(',').filter(Boolean);
-        const linkedIds=DEMO_SESSION_STATE.industryKnowledgeIds;
+        const pickerMode=industry.dataset.knowledgePickerMode||'daily';
+        const inputModule=INDUSTRY_INPUT_KNOWLEDGE_MODULES.find(item=>item.key===industry.dataset.knowledgePickerModule);
+        const linkedIds=pickerMode==='input'?DEMO_SESSION_STATE.industryInputKnowledgeIds:DEMO_SESSION_STATE.industryKnowledgeIds;
         const keyword=query.trim().toLowerCase();
         const resources=DEMO_KNOWLEDGE_RESOURCES.filter(resource=>{
           const text=[resource.title,resource.type,resource.owner,resource.url].join(' ').toLowerCase();
-          return !keyword||text.includes(keyword);
+          const matchesModule=pickerMode!=='input'||resource.id===inputModule?.resourceId;
+          return matchesModule&&(!keyword||text.includes(keyword));
         });
         return resources.length?resources.map(resource=>{
           const selected=selectedIds.includes(resource.id);
@@ -3534,6 +3562,17 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	                <p class="industry-field-hint">例：2025/10 → 2025/10/15-2025/11/18。</p>
 	              </div>
             </div>
+            <div class="industry-input-knowledge-grid">
+              ${INDUSTRY_INPUT_KNOWLEDGE_MODULES.map(module=>`
+                <section class="industry-input-knowledge-card" data-industry-input-knowledge-card="${module.key}">
+                  <div class="industry-input-knowledge-head">
+                    <div><h3>${module.title}</h3><p>${module.desc}</p></div>
+                    <button class="industry-add-knowledge" data-open-industry-input-knowledge="${module.key}" type="button">添加</button>
+                  </div>
+                  <div class="industry-knowledge-list" data-industry-input-knowledge-list="${module.key}">${renderIndustryInputKnowledgeItems(module)}</div>
+                </section>
+              `).join('')}
+            </div>
             <div class="industry-form-actions">
               <button data-start-industry-calc type="button">保存并开始测算</button>
             </div>
@@ -3633,7 +3672,15 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
       const industryKnowledgeConfirm=industry.querySelector('[data-confirm-industry-knowledge]');
       const getIndustrySelectedIds=()=>String(industry.dataset.selectedKnowledgeIds||'').split(',').filter(Boolean);
       const setIndustrySelectedIds=ids=>{industry.dataset.selectedKnowledgeIds=ids.join(',')};
+      const getInputKnowledgeModule=()=>INDUSTRY_INPUT_KNOWLEDGE_MODULES.find(item=>item.key===industry.dataset.knowledgePickerModule);
+      const refreshIndustryInputKnowledgeViews=()=>{
+        INDUSTRY_INPUT_KNOWLEDGE_MODULES.forEach(module=>{
+          const list=industry.querySelector('[data-industry-input-knowledge-list="'+module.key+'"]');
+          if(list)list.innerHTML=renderIndustryInputKnowledgeItems(module);
+        });
+      };
       const refreshIndustryKnowledgeViews=()=>{
+        refreshIndustryInputKnowledgeViews();
         const html=renderIndustryKnowledgeItems();
         const inlineList=industry.querySelector('[data-industry-knowledge-inline-list]');
         if(inlineList)inlineList.innerHTML=html;
@@ -3641,18 +3688,39 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         if(industryKnowledgeConfirm)industryKnowledgeConfirm.disabled=getIndustrySelectedIds().length===0;
       };
       industry.querySelector('[data-open-industry-knowledge]')?.addEventListener('click',()=>{
+        industry.dataset.knowledgePickerMode='daily';
+        delete industry.dataset.knowledgePickerModule;
         setIndustrySelectedIds([]);
         if(industryKnowledgeSearch)industryKnowledgeSearch.value='';
+        const title=industryKnowledgeModal?.querySelector('h3');
+        if(title)title.textContent='选择可添加的 Knowledge 资源';
         industryKnowledgeModal?.removeAttribute('hidden');
         refreshIndustryKnowledgeViews();
         industryKnowledgeSearch?.focus();
+      });
+      industry.querySelectorAll('[data-open-industry-input-knowledge]').forEach(button=>{
+        button.addEventListener('click',()=>{
+          const moduleKey=button.dataset.openIndustryInputKnowledge;
+          const module=INDUSTRY_INPUT_KNOWLEDGE_MODULES.find(item=>item.key===moduleKey);
+          if(!module)return;
+          industry.dataset.knowledgePickerMode='input';
+          industry.dataset.knowledgePickerModule=moduleKey;
+          setIndustrySelectedIds([]);
+          if(industryKnowledgeSearch)industryKnowledgeSearch.value='';
+          const title=industryKnowledgeModal?.querySelector('h3');
+          if(title)title.textContent='添加 '+module.title;
+          industryKnowledgeModal?.removeAttribute('hidden');
+          refreshIndustryKnowledgeViews();
+          industryKnowledgeSearch?.focus();
+        });
       });
       industryKnowledgeSearch?.addEventListener('input',refreshIndustryKnowledgeViews);
       industryKnowledgeOptions?.addEventListener('click',event=>{
         const option=event.target.closest('[data-industry-resource-id]');
         if(!option)return;
         const id=option.dataset.industryResourceId;
-        if(DEMO_SESSION_STATE.industryKnowledgeIds.includes(id))return;
+        const linkedIds=industry.dataset.knowledgePickerMode==='input'?DEMO_SESSION_STATE.industryInputKnowledgeIds:DEMO_SESSION_STATE.industryKnowledgeIds;
+        if(linkedIds.includes(id))return;
         const selected=getIndustrySelectedIds();
         setIndustrySelectedIds(selected.includes(id)?selected.filter(item=>item!==id):[...selected,id]);
         refreshIndustryKnowledgeViews();
@@ -3664,15 +3732,51 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         if(event.target===industryKnowledgeModal)industryKnowledgeModal.setAttribute('hidden','');
       });
       industryKnowledgeConfirm?.addEventListener('click',()=>{
-        const selected=getIndustrySelectedIds().filter(id=>!DEMO_SESSION_STATE.industryKnowledgeIds.includes(id)&&getDemoKnowledgeResource(id));
+        const pickerMode=industry.dataset.knowledgePickerMode||'daily';
+        const inputModule=getInputKnowledgeModule();
+        const selected=getIndustrySelectedIds().filter(id=>{
+          const resource=getDemoKnowledgeResource(id);
+          if(!resource)return false;
+          if(pickerMode==='input')return id===inputModule?.resourceId&&!DEMO_SESSION_STATE.industryInputKnowledgeIds.includes(id);
+          return !DEMO_SESSION_STATE.industryKnowledgeIds.includes(id);
+        });
         if(!selected.length)return;
-        DEMO_SESSION_STATE.industryKnowledgeIds=[...DEMO_SESSION_STATE.industryKnowledgeIds,...selected];
+        if(pickerMode==='input'){
+          DEMO_SESSION_STATE.industryInputKnowledgeIds=[...DEMO_SESSION_STATE.industryInputKnowledgeIds,...selected];
+          selected.forEach(id=>{DEMO_SESSION_STATE.industryInputKnowledgeParsed[id]=false});
+        }else{
+          DEMO_SESSION_STATE.industryKnowledgeIds=[...DEMO_SESSION_STATE.industryKnowledgeIds,...selected];
+        }
         setIndustrySelectedIds([]);
         refreshIndustryKnowledgeViews();
         industryKnowledgeModal?.setAttribute('hidden','');
-	        doc.defaultView.toast?.('已添加 '+selected.length+' 个 Knowledge 资源到分日行业目标预测');
+        doc.defaultView.tip?.(pickerMode==='input'?'已添加 '+(inputModule?.title||'Knowledge 资源')+'，请点击解析':'已添加 '+selected.length+' 个 Knowledge 资源到分日行业目标预测');
       });
       industry.addEventListener('click',event=>{
+        const parseInput=event.target.closest('[data-parse-industry-input-knowledge]');
+        if(parseInput){
+          const id=parseInput.dataset.parseIndustryInputKnowledge;
+          const resource=getDemoKnowledgeResource(id);
+          parseInput.textContent='解析中...';
+          parseInput.disabled=true;
+          setTimeout(()=>{
+            DEMO_SESSION_STATE.industryInputKnowledgeParsed[id]=true;
+            refreshIndustryKnowledgeViews();
+            doc.defaultView.tip?.('已解析 '+(resource?.title||'Knowledge 资源'));
+          },320);
+          return;
+        }
+        const removeInput=event.target.closest('[data-remove-industry-input-knowledge]');
+        if(removeInput){
+          const id=removeInput.dataset.removeIndustryInputKnowledge;
+          const resource=getDemoKnowledgeResource(id);
+          DEMO_SESSION_STATE.industryInputKnowledgeIds=DEMO_SESSION_STATE.industryInputKnowledgeIds.filter(item=>item!==id);
+          delete DEMO_SESSION_STATE.industryInputKnowledgeParsed[id];
+          setIndustrySelectedIds(getIndustrySelectedIds().filter(item=>item!==id));
+          refreshIndustryKnowledgeViews();
+          doc.defaultView.tip?.('已删除 '+(resource?.title||'Knowledge 资源'));
+          return;
+        }
         const remove=event.target.closest('[data-remove-industry-knowledge]');
         if(!remove)return;
         const id=remove.dataset.removeIndustryKnowledge;
@@ -3680,7 +3784,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         DEMO_SESSION_STATE.industryKnowledgeIds=DEMO_SESSION_STATE.industryKnowledgeIds.filter(item=>item!==id);
         setIndustrySelectedIds(getIndustrySelectedIds().filter(item=>item!==id));
         refreshIndustryKnowledgeViews();
-        doc.defaultView.toast?.('已删除 '+(resource?.title||'Knowledge 资源'));
+        doc.defaultView.tip?.('已删除 '+(resource?.title||'Knowledge 资源'));
       });
 	      if(knowledgePanel){
 	        knowledgePanel.hidden=true;
