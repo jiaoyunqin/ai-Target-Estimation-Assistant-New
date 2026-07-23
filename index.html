@@ -462,7 +462,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     industryInputKnowledgeIds:['okr-2026-promo-new','comparable-promo-maintenance'],
     industryInputKnowledgeParsed:{'okr-2026-promo-new':true,'comparable-promo-maintenance':true},
     industryKnowledgeIds:['industry-session-2026-618'],
-    historyMappingReady:false,
+    historyMappingReady:true,
 	    historyMappingSkill:'v1',
     infoReady:false,
     marketCompleted:false,
@@ -742,9 +742,12 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
   function enhanceNaturalFrame(doc){
     if(!doc||doc.documentElement.dataset.naturalCleaned==='true')return;
     doc.documentElement.dataset.naturalCleaned='true';
+    doc.querySelector('.chatbot-area')?.remove();
     const svgNS='http://www.w3.org/2000/svg';
     const style=doc.createElement('style');
     style.textContent=`
+      .page{grid-template-columns:minmax(0,1fr) clamp(300px,22vw,380px)!important}
+      @media(max-width:1180px){.page{grid-template-columns:1fr!important}.page>.side{display:none!important}}
       .natural-legend .skill1,.natural-legend .skill2{display:none!important}
       .natural-legend .average:before{border-color:#95a7c1!important;border-style:dashed}
       #futureBg,#futureDivider,#skillOnePath,#skillTwoPath{display:none!important}
@@ -962,8 +965,11 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     const main=doc.querySelector('main.main');
     if(!main||main.dataset.infoEnhanced==='true')return;
     main.dataset.infoEnhanced='true';
+    doc.querySelector('.chatbot-area')?.remove();
     const promoStyle=doc.createElement('style');
     promoStyle.textContent=`
+      .layout{grid-template-columns:minmax(0,1fr) clamp(260px,20vw,320px)!important;max-width:none!important}
+      @media(max-width:1100px){.layout{grid-template-columns:1fr!important}.right{display:none!important}}
       .info-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
       .info-head h2{margin:0;display:flex;align-items:center;gap:8px}
       .info-head small{color:#8392ac;font-weight:700}
@@ -1211,7 +1217,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
         </div>
       </section>
         <div class="info-confirm-actions" data-info-confirm-card>
-	          <span class="info-confirm-note">已确认 1-4 项信息，历史可比日将在大盘测算开始前选择</span>
+		          <span class="info-confirm-note">已确认 1-4 项信息，历史参考 Skill 已并入支付GMV目标测算</span>
 	          <button class="confirm-history-btn" data-confirm-info-history aria-expanded="false">确认并进入大盘测算</button>
         </div>
         <div class="doc-modal-mask" data-doc-import-modal hidden>
@@ -1320,7 +1326,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      confirmInfoReady();
 	      confirmHistoryBtn?.addEventListener('click',()=>{
 	        confirmInfoReady();
-	        doc.defaultView.toast?.('大促信息已确认，请在大盘测算开始前选择历史可比日');
+		        doc.defaultView.toast?.('大促信息已确认，进入支付GMV目标测算');
 	        doc.defaultView.parent?.document.querySelector('[data-workspace="target"]')?.click();
 	        doc.defaultView.parent?.openPage?.('market');
 	      });
@@ -2071,6 +2077,9 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	      .okr-merged-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:0 0 10px}
 	      .okr-merged-head h3{margin:0;color:#294a78;font-size:16px;font-weight:900}
 	      .okr-skill-ref{color:#8191a8;font-size:12px;font-weight:900;text-align:right;white-space:nowrap}
+		      .okr-source-row{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-top:10px}
+		      .okr-source-row .skill-picker{width:min(42vw,420px);min-width:310px}
+		      .okr-source-note{width:100%;margin:2px 0 0;color:#7486a2;font-size:11px;font-weight:800;line-height:1.45}
 	      .okr-driver-panel{border:1px solid #dce8f8;background:linear-gradient(180deg,#f8fbff,#eef5ff);border-radius:14px;padding:13px 14px;margin:0 0 12px;display:grid;gap:11px}
 	      .okr-driver-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 	      .okr-driver-head h4{margin:0;color:#263a5b;font-size:14px;font-weight:900}
@@ -2194,41 +2203,6 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     market.innerHTML=`
       <div class="market-progressive">
 	        <div class="market-run-controls" hidden><b data-market-status hidden>待测算</b><button class="market-regenerate-btn" data-run-market-calc type="button">待测算</button></div>
-	        <section class="market-history-gate" data-market-history-gate>
-	          <div class="history-card-head">
-	            <div class="history-card-title">
-		              <div><h3>历史参考与可比日</h3><small>开始大盘测算前的人工交互项。确认后，mapping 将作为大盘测算输入。根据设定的活动促周期，选择并匹配更精确的分日参照日映射。</small></div>
-	            </div>
-	            <div class="history-card-actions">
-		              <span class="skill-auto-badge">已自动获取 2 个匹配 Skill</span>
-	              <div class="skill-picker">
-	                <div class="skill-source-label">Skill 来源</div>
-	                <div class="skill-select-shell">
-	                  <select class="skill-select" data-history-skill>
-	                    <option value="v1">target-period-selection-logic-1-0｜对照期选取1.0（首末日/特殊日期/周中周末）</option>
-	                    <option value="v2">target-period-selection-logic-2-0｜对照期选取2.0（含补贴信息/特殊日期）</option>
-	                  </select>
-	                </div>
-	              </div>
-	              <button class="manual-edit-btn" data-edit-history-mapping>人工修正</button>
-	              <button class="manual-save-btn" data-save-history-mapping hidden>保存修正</button>
-	            </div>
-	          </div>
-	          <div class="mapping-summary" data-mapping-summary></div>
-	          <div class="skill-basis" data-skill-basis></div>
-	          <div class="mapping-table-wrap">
-	            <table class="mapping-table">
-	              <thead><tr data-mapping-head></tr></thead>
-	              <tbody data-mapping-body></tbody>
-	            </table>
-	          </div>
-	          <div class="skill-result-note">说明：当前为基于 Skill 规则的初步编排结果；人工修正仅允许修改「25年对应日期」列。</div>
-	          <div class="manual-edit-note" data-manual-edit-note>已进入人工修正模式：仅支持修正「25年对应日期」列，保存后该 mapping 将作为当前测算输入。</div>
-	          <div class="market-history-actions">
-	            <span data-market-history-state>待确认历史可比日，确认后可开始大盘测算</span>
-	            <button data-confirm-market-history type="button">确认可比日并开始测算</button>
-	          </div>
-	        </section>
         <section class="knowledge-fetch-panel" data-market-knowledge>
           <h3>自动获取知识库</h3>
           <div class="knowledge-fetch-source">
@@ -2250,13 +2224,10 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
           <div class="gen-step" data-gen-step="done"><b>测算完成</b><span>等待拆解完成</span></div>
         </div>
         <div class="generated-stack" data-generated-stack></div>
-	        <div class="market-placeholder" data-market-placeholder>请先确认上方历史参考与可比日；确认后系统会自动读取知识库并调用 Skill 生成测算结果。</div>
+		        <div class="market-placeholder" data-market-placeholder>系统将自动读取知识库与历史参考 Skill，生成支付GMV目标（OKR法）测算结果。</div>
       </div>
     `;
     const runBtn=market.querySelector('[data-run-market-calc]');
-	    const historyGate=market.querySelector('[data-market-history-gate]');
-	    const confirmMarketHistoryBtn=market.querySelector('[data-confirm-market-history]');
-	    const marketHistoryState=market.querySelector('[data-market-history-state]');
     const skillPanel=market.querySelector('[data-market-skills]');
     const knowledgePanel=market.querySelector('[data-market-knowledge]');
     const progressRail=market.querySelector('.progress-rail');
@@ -2296,6 +2267,19 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	        <div class="okr-merged-head">
 		          <div>
 		            <h3>支付GMV目标（OKR法）</h3>
+		            <div class="okr-source-row">
+		              <span class="skill-auto-badge">已自动获取 2 个匹配 Skill</span>
+		              <div class="skill-picker">
+		                <div class="skill-source-label">Skill 来源</div>
+		                <div class="skill-select-shell">
+		                  <select class="skill-select" data-history-skill>
+		                    <option value="v1">target-period-selection-logic-1-0｜对照期选取1.0（首末日/特殊日期/周中周末）</option>
+		                    <option value="v2">target-period-selection-logic-2-0｜对照期选取2.0（含补贴信息/特殊日期）</option>
+		                  </select>
+		                </div>
+		              </div>
+		              <p class="okr-source-note" data-okr-source-note></p>
+		            </div>
 		          </div>
 		          <span class="okr-skill-ref">引用 Skill：支付GMV（OKR法）目标预估</span>
 	        </div>
@@ -2440,120 +2424,39 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     };
     mountOriginalBlock('cycle','大盘全周期/分阶段目标','复用原始完整测算内容模块',originalCycle);
     mountOriginalBlock('daily','分日目标','复用原始完整分日测算内容模块',originalDaily);
-	    const renderMarketHistoryMapping=type=>{
-	      const data=DEMO_HISTORY_MAPPINGS[type]||DEMO_HISTORY_MAPPINGS.v1;
-	      const summary=historyGate.querySelector('[data-mapping-summary]');
-	      const basis=historyGate.querySelector('[data-skill-basis]');
-	      const head=historyGate.querySelector('[data-mapping-head]');
-	      const body=historyGate.querySelector('[data-mapping-body]');
-	      summary.innerHTML=data.summary.map(item=>'<div><b>'+item[0]+'</b><small>'+item[1]+'</small></div>').join('');
-	      basis.innerHTML='<b>'+data.desc+'</b><br>'+data.basis;
-	      head.innerHTML=data.columns.map(col=>'<th>'+col+'</th>').join('');
-	      body.innerHTML=data.rows.map(row=>'<tr>'+row.map((cell,index)=>{
-	        const cls=index===0?'date-cell':index===data.matchIndex?'match-cell':'';
-	        const content=(data.chipIndexes||[]).includes(index)?'<span class="mapping-chip">'+cell+'</span>':cell;
-	        return '<td class="'+cls+'">'+content+'</td>';
-	      }).join('')+'</tr>').join('');
-	      const table=historyGate.querySelector('.mapping-table');
-	      table.classList.remove('editing');
-	      table.dataset.editableIndex=String(data.matchIndex);
-	      table.querySelectorAll('tbody td[contenteditable="true"]').forEach(cell=>{
-	        cell.removeAttribute('contenteditable');
-	        delete cell.dataset.manualEditable;
-	      });
-	      const manualNote=historyGate.querySelector('[data-manual-edit-note]');
-	      manualNote.textContent='已进入人工修正模式：仅支持修正「25年对应日期」列，保存后该 mapping 将作为当前测算输入。';
-	      manualNote.classList.remove('on');
-	      historyGate.querySelector('[data-save-history-mapping]')?.setAttribute('hidden','');
-	      const editButton=historyGate.querySelector('[data-edit-history-mapping]');
-	      if(editButton)editButton.textContent='人工修正';
-	    };
-	    const updateMarketHistoryGate=()=>{
-	      const ready=Boolean(DEMO_SESSION_STATE.historyMappingReady);
-	      historyGate.classList.toggle('confirmed',ready);
-	      if(marketHistoryState)marketHistoryState.textContent=ready?'历史可比日已确认，可重新生成大盘测算':'待确认历史可比日，确认后可开始大盘测算';
-	      if(confirmMarketHistoryBtn)confirmMarketHistoryBtn.textContent=ready?'✓ 已确认，重新开始测算':'确认可比日并开始测算';
-	      const select=historyGate.querySelector('[data-history-skill]');
-	      if(select)select.disabled=ready;
-	    };
-	    historyGate.querySelector('[data-history-skill]')?.addEventListener('change',event=>{
-	      DEMO_SESSION_STATE.historyMappingReady=false;
-	      DEMO_SESSION_STATE.historyMappingSkill=event.target.value;
-	      renderMarketHistoryMapping(event.target.value);
-	      updateMarketHistoryGate();
+		    const renderMarketHistoryMapping=type=>{
+		      const data=DEMO_HISTORY_MAPPINGS[type]||DEMO_HISTORY_MAPPINGS.v1;
+		      const select=market.querySelector('[data-history-skill]');
+		      const note=market.querySelector('[data-okr-source-note]');
+		      if(select)select.value=type;
+		      if(note)note.textContent=data.desc+' 已融合进目标结果明细表，对应日期与参考区列随 OKR 法测算结果展示。';
+		    };
+		    const updateMarketHistoryGate=()=>{
+		      DEMO_SESSION_STATE.historyMappingReady=true;
+		      renderMarketHistoryMapping(DEMO_SESSION_STATE.historyMappingSkill||'v1');
+		    };
+		    market.querySelector('[data-history-skill]')?.addEventListener('change',event=>{
+		      DEMO_SESSION_STATE.historyMappingSkill=event.target.value;
+		      DEMO_SESSION_STATE.historyMappingReady=true;
+		      renderMarketHistoryMapping(event.target.value);
 		      resetMarketGeneration();
-	    });
-	    historyGate.querySelector('[data-edit-history-mapping]')?.addEventListener('click',()=>{
-	      const table=historyGate.querySelector('.mapping-table');
-	      const note=historyGate.querySelector('[data-manual-edit-note]');
-	      const saveButton=historyGate.querySelector('[data-save-history-mapping]');
-	      table.classList.add('editing');
-	      const editableIndex=Number(table.dataset.editableIndex??-1);
-	      table.querySelectorAll('tbody td').forEach(cell=>{
-	        cell.removeAttribute('contenteditable');
-	        delete cell.dataset.manualEditable;
-	      });
-	      table.querySelectorAll('tbody tr').forEach(row=>{
-	        const cell=row.children[editableIndex];
-	        if(cell){
-	          cell.setAttribute('contenteditable','true');
-	          cell.dataset.manualEditable='true';
-	        }
-	      });
-	      if(note)note.textContent='已进入人工修正模式：仅支持修正「25年对应日期」列，保存后该 mapping 将作为当前测算输入。';
-	      note?.classList.add('on');
-	      saveButton?.removeAttribute('hidden');
-	      historyGate.querySelector('[data-edit-history-mapping]').textContent='修正中';
-	      doc.defaultView.tip?.('已开启人工修正，仅可编辑对应日期列');
-	    });
-	    historyGate.querySelector('[data-save-history-mapping]')?.addEventListener('click',()=>{
-	      const table=historyGate.querySelector('.mapping-table');
-	      const note=historyGate.querySelector('[data-manual-edit-note]');
-	      table.classList.remove('editing');
-	      table.querySelectorAll('tbody td[contenteditable="true"]').forEach(cell=>{
-	        cell.removeAttribute('contenteditable');
-	        delete cell.dataset.manualEditable;
-	      });
-	      if(note){
-	        note.textContent='已保存人工修正：当前 mapping 将作为本次测算输入。';
-	        note.classList.add('on');
-	      }
-	      historyGate.querySelector('[data-save-history-mapping]')?.setAttribute('hidden','');
-	      const editButton=historyGate.querySelector('[data-edit-history-mapping]');
-	      if(editButton)editButton.textContent='继续修正';
-	      DEMO_SESSION_STATE.historyMappingReady=false;
-	      updateMarketHistoryGate();
-		      resetMarketGeneration();
-	      doc.defaultView.tip?.('人工修正已保存，请确认可比日后开始测算');
-	    });
-	    confirmMarketHistoryBtn?.addEventListener('click',()=>{
-	      const select=historyGate.querySelector('[data-history-skill]');
-	      DEMO_SESSION_STATE.historyMappingSkill=select?.value||'v1';
-	      DEMO_SESSION_STATE.historyMappingReady=true;
-	      updateMarketHistoryGate();
-	      resetMarketGeneration();
-	      doc.defaultView.parent?.syncTargetWorkflowState?.();
-	      doc.defaultView.tip?.('历史可比日已确认，开始大盘测算');
-	      doc.defaultView.setTimeout(()=>{
-	        market.dataset.allowProgrammaticRun='true';
-	        runBtn?.click();
-	        market.dataset.allowProgrammaticRun='false';
-	      },120);
-	    });
+		      startMarketOkrRun(80);
+		      doc.defaultView.tip?.('已切换历史参考 Skill，支付GMV目标结果将按当前来源重算');
+		    });
     const resetMarketGeneration=()=>{
       market.dataset.runStarted='false';
 	      market.dataset.marketStage='idle';
 	      market.dataset.skillRunId='';
-	      const historyReady=Boolean(DEMO_SESSION_STATE.historyMappingReady);
-	      status.textContent=historyReady?'待测算':'待确认历史可比日';
-	        runBtn.textContent=historyReady?'发起测算':'待确认可比日';
+		      DEMO_SESSION_STATE.historyMappingReady=true;
+		      status.textContent='待测算';
+		        runBtn.textContent='发起测算';
       skillPanel.classList.remove('on');
       resetSkillCallCards(skillPanel);
 	        revealDiscoveredSkillCards(skillPanel,'已自动获取 4 个匹配 Skill，等待发起测算');
 	      markMarketHistorySkillReady();
       generated.classList.remove('on');
       placeholder.style.display='';
-	      placeholder.textContent=historyReady?'历史可比日已确认。点击「发起测算」后，系统会自动读取知识库并调用 Skill 生成测算结果。':'请先确认上方历史参考与可比日；确认后系统会自动读取知识库并调用 Skill 生成测算结果。';
+		      placeholder.textContent='系统将自动读取知识库与历史参考 Skill，生成支付GMV目标（OKR法）测算结果。';
       progressRail.querySelectorAll('[data-gen-step]').forEach(step=>step.classList.remove('active','done'));
       market.querySelectorAll('[data-block]').forEach(block=>block.classList.remove('show'));
 	      market.querySelectorAll('[data-confirm-market-stage]').forEach(button=>{
@@ -2561,9 +2464,17 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	        button.classList.remove('done');
 	        button.textContent=button.dataset.confirmMarketStage==='cycle'?'确认并进入分日预测':'确认分日预测结果';
 	      });
-	      runBtn.disabled=!historyReady;
+		      runBtn.disabled=false;
 	      updateMarketHistoryGate();
     };
+		    function startMarketOkrRun(delay=0){
+		      doc.defaultView.setTimeout(()=>{
+		        if(!runBtn||runBtn.disabled||market.dataset.runStarted==='true')return;
+		        market.dataset.allowProgrammaticRun='true';
+		        runBtn.click();
+		        market.dataset.allowProgrammaticRun='false';
+		      },delay);
+		    }
 	    const steps=[...progressRail.querySelectorAll('[data-gen-step]')];
 	    const markMarketHistorySkillReady=()=>{
 	      if(!DEMO_SESSION_STATE.historyMappingReady)return;
@@ -2637,9 +2548,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     runBtn?.addEventListener('click',(event)=>{
       if(event&&!event.isTrusted&&market.dataset.allowProgrammaticRun!=='true')return;
 	      if(!DEMO_SESSION_STATE.historyMappingReady){
-	        doc.defaultView.tip?.('请先确认历史参考与可比日');
-	        historyGate.scrollIntoView({behavior:'smooth',block:'start'});
-	        return;
+		        DEMO_SESSION_STATE.historyMappingReady=true;
+		        updateMarketHistoryGate();
 	      }
       market.dataset.runStarted='true';
       runBtn.disabled=true;
@@ -2719,14 +2629,8 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
 	    });
 	    renderMarketHistoryMapping(DEMO_SESSION_STATE.historyMappingSkill||'v1');
 	    resetMarketGeneration();
-    if(DEMO_SESSION_STATE.autoRunMarketFromInfo){
-      DEMO_SESSION_STATE.autoRunMarketFromInfo=false;
-      doc.defaultView.setTimeout(()=>{
-        market.dataset.allowProgrammaticRun='true';
-        runBtn?.click();
-        market.dataset.allowProgrammaticRun='false';
-      },180);
-    }
+	    if(DEMO_SESSION_STATE.autoRunMarketFromInfo)DEMO_SESSION_STATE.autoRunMarketFromInfo=false;
+	    startMarketOkrRun(180);
   }
 
   function enhanceIndustryFrame(doc){
@@ -4596,7 +4500,7 @@ document.querySelectorAll('.restricted-filters .allowed').forEach(b=>b.onclick=(
     const selectors={
       natural:'body',
       info:'body',
-      marketTarget:'[data-market-history-gate], [data-block="cycle"]',
+	      marketTarget:'[data-block="cycle"], [data-market-skills]',
       marketDaily:'[data-block="daily"]',
       industryTarget:'[data-industry-input-form], [data-industry-block="cycle"]',
       industryDaily:'[data-industry-block="daily"]'
